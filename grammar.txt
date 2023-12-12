@@ -1,0 +1,30 @@
+Program -> Instruction Program
+	   | epsilon
+
+Instruction -> Location
+	     | Proposition
+	     | Insert
+
+Location -> location Identifier Text
+
+Proposition -> proposition Identifier direct to Identifier Text
+
+Insert -> in Identifier insert Insertions
+
+Insertions -> [ FirstInsertion RestInsertion ]
+	   | Identifier
+
+FirstInsertion -> Identifier
+		| epsilon
+
+RestInsertion -> , FirstInsertion RestInsertion
+	       | epsilon
+
+Text > """ Description """
+Description -> Character Description
+	     | epsilon
+
+
+
+
+
