@@ -1,0 +1,25 @@
+location MyLocation
+"""
+L'éboulement est récent, et les gravats instables.
+Dans un soudain nuage de poussière, une pluie de pierres vous ensevelit.
+Perdez 2 points de survie. Si vous pouvez les dépenser, vous vous dégagez de la nouvelle avalanche.
+Quelle est ensuite votre décision ?
+"""
+
+proposition MyProposition direct to AnotherLocation
+"""
+Vous continuez à tenter de déblayer ?
+"""
+
+proposition MySecondProposition direct to AnotherLocation
+"""
+Vous continuez à tenter de déblayer ?
+"""
+
+in MyLocation insert MyProposition
+proposition MyAnonymeProposition direct to AnotherLocation
+"""
+Vous continuez à tenter de déblayer ?
+"""
+
+in MyLocation insert [ MySecondProposition, MyProposition ]
