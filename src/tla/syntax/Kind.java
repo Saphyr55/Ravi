@@ -3,11 +3,7 @@ package tla.syntax;
 public enum Kind {
     EOF,
     Unknown,
-    PropositionKw,
-    InsertKw,
     InKw,
-    DirectKw,
-    ToKw,
     ThreeDoubleQuote,
     Quote,
     Text,
@@ -17,5 +13,15 @@ public enum Kind {
     ElseKw,
     LetKw,
     BeginKw,
-    EndKw, LocationKw, OpenSquareBracket, CloseSquareBracket, Comma,
+    EndKw,
+    OpenSquareBracket,
+    CloseSquareBracket,
+    Comma,
+    OpenKw,
+    IncludeKw,
+    NativeKw,
+    MatchKw,
+    WithKw,
+    Equal,
+
 }

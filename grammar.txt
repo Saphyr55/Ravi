@@ -1,30 +1,32 @@
 Program -> Instruction Program
-	   | epsilon
+	     | epsilon
 
-Instruction -> Location
-	     | Proposition
-	     | Insert
+Instruction -> Let
+	         | Expr
 
-Location -> location Identifier Text
+Let -> let Identifier ArgList = Expr end
 
-Proposition -> proposition Identifier direct to Identifier Text
+ArgList -> ( ArgDeclarationList )
+         | epsilon
 
-Insert -> in Identifier insert Insertions
+ArgDeclarationList -> Identifier , ArgDeclarationList
+                  | Identifier
 
-Insertions -> [ FirstInsertion RestInsertion ]
-	   | Identifier
+Expr -> Expr Expr
+      | let Identifier = Expr in Expr end
+      | begin Instruction end
+      | ( Expr )
+      | epsilon
 
-FirstInsertion -> Identifier
+List -> [ HeadList RestList ]
+
+HeadList -> Expr
 		| epsilon
 
-RestInsertion -> , FirstInsertion RestInsertion
+RestList -> , HeadList RestList
 	       | epsilon
 
 Text > """ Description """
+
 Description -> Character Description
 	     | epsilon
-
-
-
-
-

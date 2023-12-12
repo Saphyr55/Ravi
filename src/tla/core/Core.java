@@ -1,5 +1,8 @@
 package tla.core;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Core {
 
     public static String stringMax(String text, int max) {

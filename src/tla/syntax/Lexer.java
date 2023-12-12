@@ -41,6 +41,7 @@ public class Lexer {
             case Symbol.DoubleQuote -> createTextToken();
             case Symbol.OpenSquareBracket -> addToken(Kind.OpenSquareBracket);
             case Symbol.CloseSquareBracket -> addToken(Kind.CloseSquareBracket);
+            case Symbol.Equal -> addToken(Kind.Equal);
             case Symbol.Comma -> addToken(Kind.Comma);
             case Symbol.BackslashN -> { line++; col = 0; }
             case Symbol.Space, Symbol.BackslashR, Symbol.BackslashT -> { }
@@ -83,7 +84,7 @@ public class Lexer {
             next();
             next();
 
-            String value = text.substring(start + 3, position - 3);
+            String value = text.substring(start + 3, position - 3).strip();
             addToken(Kind.Text, value);
             return;
         }
@@ -128,7 +129,7 @@ public class Lexer {
     }
 
     private void report(String message) {
-        System.err.println("Error" + ": " + message + " at " + "[" + ( line + 1 ) + "," + ( col + 1 ) + "].");
+        System.err.println("Error" + ": " + message + " At " + "[" + ( line + 1 ) + "," + ( col + 1 ) + "].");
         hadError = true;
     }
 
