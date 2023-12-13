@@ -2,7 +2,7 @@ Program -> Instruction Program
 	     | epsilon
 
 Instruction -> Let
-	         | Expr ;
+	         | Expr
 
 Let -> let Identifier ArgList = Expr end
 
@@ -14,11 +14,13 @@ ArgDeclarationList -> Identifier , ArgDeclarationList
 
 Expr -> Expr Expr
       | Expr ; Expr
-      | let Identifier = Expr in Expr end
-      | begin Instruction end
-      | ( Expr )
       | Text
+      | List
       | Number
+      | Identifier
+      | let Identifier = Expr in Expr end
+      | begin Expr end
+      | ( Expr )
       | epsilon
 
 List -> [ HeadList RestList ]

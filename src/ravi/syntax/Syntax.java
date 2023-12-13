@@ -43,6 +43,9 @@ public final class Syntax {
         public static final String DoubleQuote = "\"";
         public static final String Comma = ",";
         public static final String Semicolon = ";";
+        public static final String OpenParenthesis = "(";
+        public static final String CloseParenthesis = ")";
+
     }
 
 

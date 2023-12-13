@@ -11,16 +11,16 @@ import static ravi.syntax.Syntax.Symbol;
 public class Lexer {
 
     static boolean hadError = false;
-    private final String text;
+    private final String source;
     private int position;
     private int start;
     private int line;
     private int col;
     private final List<Token> tokens;
 
-    public Lexer(String text, Supplier<List<Token>> listSupplier) {
+    public Lexer(String source, Supplier<List<Token>> listSupplier) {
         this.tokens = listSupplier.get();
-        this.text = text;
+        this.source = source;
     }
 
     public List<Token> scan() {
@@ -39,6 +39,8 @@ public class Lexer {
         final String s = String.valueOf(advance());
         switch (s) {
             case Symbol.DoubleQuote -> createTextToken();
+            case Symbol.OpenParenthesis -> addToken(Kind.OpenParenthesis);
+            case Symbol.CloseParenthesis -> addToken(Kind.CloseParenthesis);
             case Symbol.OpenSquareBracket -> addToken(Kind.OpenSquareBracket);
             case Symbol.CloseSquareBracket -> addToken(Kind.CloseSquareBracket);
             case Symbol.Equal -> addToken(Kind.Equal);
@@ -64,8 +66,9 @@ public class Lexer {
             next();
         }
 
-        Kind type = BindingManager.KEYWORDS.get(text.substring(start, position));
-        addToken(type == null ? Kind.Identifier : type);
+        String text = source.substring(start, position);
+        Kind type = BindingManager.KEYWORDS.get(text);
+        addToken(type == null ? Kind.Identifier : type, type == null ? text : null);
     }
 
     private void createTextToken() {
@@ -85,7 +88,7 @@ public class Lexer {
             next();
             next();
 
-            String value = text.substring(start + 3, position - 3).strip();
+            String value = source.substring(start + 3, position - 3).strip();
             addToken(Kind.Text, value);
             return;
         }
@@ -96,20 +99,20 @@ public class Lexer {
         if (isAtEnd()) {
             return '\0';
         }
-        return text.charAt(position);
+        return source.charAt(position);
     }
 
     private char peekNext() {
 
-        if (position + 1 >= text.length()) {
+        if (position + 1 >= source.length()) {
             return '\0';
         }
 
-        return text.charAt(position + 1);
+        return source.charAt(position + 1);
     }
 
     private char advance() {
-        return text.charAt(next());
+        return source.charAt(next());
     }
 
     private int next() {
@@ -122,11 +125,11 @@ public class Lexer {
     }
 
     private char currentChar() {
-        return position >= text.length() ? '\0' : text.charAt(position);
+        return position >= source.length() ? '\0' : source.charAt(position);
     }
 
     private boolean isAtEnd() {
-        return position >= text.length();
+        return position >= source.length();
     }
 
     private void report(String message) {
@@ -139,7 +142,7 @@ public class Lexer {
     }
 
     private void addToken(Kind kind, Object value) {
-        String subtext = text.substring(start, position);
+        String subtext = source.substring(start, position);
         tokens.add(new Token(kind, value, subtext, line, col));
     }
 
@@ -147,7 +150,7 @@ public class Lexer {
         if (isAtEnd()) {
             return false;
         }
-        if (!String.valueOf(text.charAt(position)).equals(expected)) {
+        if (!String.valueOf(source.charAt(position)).equals(expected)) {
             return false;
         }
         next();

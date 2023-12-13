@@ -13,11 +13,21 @@ Réalisé par :
 
 package ravi;
 
+import ravi.syntax.Lexer;
+import ravi.syntax.Parser;
+import ravi.syntax.model.Program;
+import ravi.syntax.Token;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.List;
 
 /*
  * Classe principale.
@@ -27,6 +37,19 @@ import java.util.*;
  */
 
 public class App implements ActionListener {
+
+    public static void main(String[] args) throws IOException {
+
+        String source = Files.readString(Path.of("game2.ravi"), StandardCharsets.UTF_8);
+        Lexer lexer = new Lexer(source, LinkedList::new);
+        List<Token> tokens = lexer.scan();
+        System.out.println(Arrays.toString(tokens.toArray()));
+
+        Parser parser = new Parser(tokens);
+        Program program = parser.program();
+        System.out.println(program);
+        SwingUtilities.invokeLater(new App()::init);
+    }
 
     // Nombre de lignes dans la zone de texte
     final int nbLignes = 20;
