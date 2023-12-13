@@ -1,25 +1,26 @@
-let MyLocation = Location
+let myLocation = location
 """
-L'éboulement  est récent, et les gravats instables.
-    Dans un soudain nuage de poussière, une pluie de pierres vous ensevelit.
+L'éboulement est récent, et les gravats instables.
+Dans un soudain nuage de poussière, une pluie de pierres vous ensevelit.
 Perdez 2 points de survie. Si vous pouvez les dépenser, vous vous dégagez de la nouvelle avalanche.
 Quelle est ensuite votre décision ?
 """
 end
 
-Insert MyLocation
-    [ Proposition AnotherLocation
+insert myLocation
+    [ proposition anotherLocation
       """
       Vous continuez à tenter de déblayer ?
       """
 
-    , Proposition AnotherLocation
+    , proposition anotherLocation
       """
       Vous continuez à tenter de déblayer ?
       """
 
-    , Proposition AnotherLocation
+    , proposition anotherLocation
       """
       Vous continuez à tenter de déblayer ?
       """
     ]
+;

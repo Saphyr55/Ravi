@@ -1,6 +1,6 @@
-package tla.syntax;
+package ravi.syntax;
 
-import static tla.core.Core.stringMax;
+import static ravi.core.Core.stringMax;
 
 public record Token(Kind kind, Object value, String text, int line, int col) {
 

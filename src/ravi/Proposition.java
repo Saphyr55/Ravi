@@ -1,4 +1,4 @@
-package tla;
+package ravi;
 
 /*
  * Proposition faite au joueur pour poursuivre dans l'aventure.

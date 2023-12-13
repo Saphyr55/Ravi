@@ -1,12 +1,12 @@
-package tla.syntax;
+package ravi.syntax;
 
-import tla.core.BindingManager;
-import tla.core.Core;
+import ravi.core.BindingManager;
+import ravi.core.Core;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-import static tla.syntax.Syntax.Symbol;
+import static ravi.syntax.Syntax.Symbol;
 
 public class Lexer {
 
@@ -43,6 +43,7 @@ public class Lexer {
             case Symbol.CloseSquareBracket -> addToken(Kind.CloseSquareBracket);
             case Symbol.Equal -> addToken(Kind.Equal);
             case Symbol.Comma -> addToken(Kind.Comma);
+            case Symbol.Semicolon -> addToken(Kind.Semicolon);
             case Symbol.BackslashN -> { line++; col = 0; }
             case Symbol.Space, Symbol.BackslashR, Symbol.BackslashT -> { }
             default -> addDefaultToken(s);

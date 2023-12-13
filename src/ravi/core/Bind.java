@@ -1,6 +1,6 @@
-package tla.core;
+package ravi.core;
 
-import tla.syntax.Kind;
+import ravi.syntax.Kind;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

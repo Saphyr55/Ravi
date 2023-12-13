@@ -1,7 +1,7 @@
-package tla.syntax;
+package ravi.syntax;
 
 
-import tla.core.Bind;
+import ravi.core.Bind;
 
 public final class Syntax {
 
@@ -42,6 +42,7 @@ public final class Syntax {
         public static final String BackslashR = "\r";
         public static final String DoubleQuote = "\"";
         public static final String Comma = ",";
+        public static final String Semicolon = ";";
     }
 
 

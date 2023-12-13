@@ -1,7 +1,7 @@
-package tla;
+package ravi;
 
-import tla.syntax.Lexer;
-import tla.syntax.Token;
+import ravi.syntax.Lexer;
+import ravi.syntax.Token;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("game.amp"), StandardCharsets.UTF_8);
+        String source = Files.readString(Path.of("game.ravi"), StandardCharsets.UTF_8);
         Lexer lexer = new Lexer(source, LinkedList::new);
         List<Token> tokens = lexer.scan();
         System.out.println(Arrays.toString(tokens.toArray()));

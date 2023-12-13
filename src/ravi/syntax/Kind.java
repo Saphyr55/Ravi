@@ -1,4 +1,4 @@
-package tla.syntax;
+package ravi.syntax;
 
 public enum Kind {
     EOF,
@@ -23,5 +23,5 @@ public enum Kind {
     MatchKw,
     WithKw,
     Equal,
-
+    Semicolon,
 }

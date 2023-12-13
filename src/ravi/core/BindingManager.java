@@ -1,7 +1,7 @@
-package tla.core;
+package ravi.core;
 
-import tla.syntax.Kind;
-import tla.syntax.Syntax;
+import ravi.syntax.Kind;
+import ravi.syntax.Syntax;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
