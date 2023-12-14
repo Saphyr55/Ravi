@@ -6,7 +6,7 @@ import java.util.List;
 
 public sealed interface Expression {
 
-    record Application(Expression expr1, List<Expression> args) implements Expression { }
+    record Application(Expression expr, List<Expression> args) implements Expression { }
 
     record ExprSemicolonExpr(Expression expr, Expression result) implements Expression {}
 

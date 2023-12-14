@@ -13,6 +13,8 @@ Réalisé par :
 
 package ravi;
 
+import ravi.resolver.Interpreter;
+import ravi.resolver.ScopeResolver;
 import ravi.syntax.Lexer;
 import ravi.syntax.Parser;
 import ravi.syntax.model.Program;
@@ -43,11 +45,18 @@ public class App implements ActionListener {
         String source = Files.readString(Path.of("game2.ravi"), StandardCharsets.UTF_8);
         Lexer lexer = new Lexer(source, LinkedList::new);
         List<Token> tokens = lexer.scan();
-        System.out.println(Arrays.toString(tokens.toArray()));
+        // System.out.println(Arrays.toString(tokens.toArray()));
 
         Parser parser = new Parser(tokens);
         Program program = parser.program();
-        System.out.println(program);
+        // System.out.println(program);
+
+        Interpreter interpreter = new Interpreter();
+        ScopeResolver scopeResolver = new ScopeResolver(interpreter);
+
+        scopeResolver.resolve(program);
+        interpreter.interpretProgram(program);
+
         SwingUtilities.invokeLater(new App()::init);
     }
 

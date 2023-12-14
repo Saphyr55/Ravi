@@ -1,6 +1,14 @@
-let myFunc x =
-    myFunc x;
-    c
+let insert l p =
+    print l;
+    print p;
+    """
+    """
+end
+
+let location msg = msg
+end
+
+let proposition l msg = msg
 end
 
 let myLocation = location
@@ -12,8 +20,19 @@ Quelle est ensuite votre décision ?
 """
 end
 
+let anotherLocation = location
+    """
+    """
+end
+
 insert myLocation (proposition anotherLocation
-"""
-Vous continuez à tenter de déblayer ?
-""")
+    """
+    Vous continuez à tenter de déblayer ?
+    """)
+
+insert myLocation (proposition anotherLocation
+    """
+    Vous continuez à tenter de déblayer.
+    """)
+
 

@@ -1,0 +1,12 @@
+
+let welcome p =
+    print p
+end
+
+let a =
+    """
+    Hello World
+    """
+end
+
+welcome a

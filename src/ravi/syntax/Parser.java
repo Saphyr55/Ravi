@@ -57,7 +57,6 @@ public class Parser {
         if (check(Kind.Semicolon)) {
             consume(Kind.Semicolon, "");
             Expression expression = expression();
-            if (expression == null)
             return new Expression.ExprSemicolonExpr(in, expression);
         }
 
@@ -66,7 +65,7 @@ public class Parser {
 
     private Expression expressionPrime() {
         if (check(Kind.Text)) return new Expression.TextExpr(text());
-        if (check(Kind.LetKw)) return letIn();
+        // if (check(Kind.LetKw)) return letIn();
         if (check(Kind.BeginKw)) return groupExpr();
         if (check(Kind.OpenParenthesis)) return parenthesisExpr();
         if (check(Kind.Identifier)) return new Expression.IdentifierExpr(identifier());
