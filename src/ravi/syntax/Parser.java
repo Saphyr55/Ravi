@@ -54,10 +54,13 @@ public class Parser {
 
         Expression in = expressionPrime();
 
+        List<Expression> expressions = new LinkedList<>();
         if (check(Kind.Semicolon)) {
-            consume(Kind.Semicolon, "");
-            Expression expression = expression();
-            return new Expression.ExprSemicolonExpr(in, expression);
+            while (check(Kind.Semicolon)) {
+                consume(Kind.Semicolon, "");
+                expressions.add(expression());
+            }
+            return new Expression.ExprSemicolonExpr(expressions, in);
         }
 
         return application(in);
@@ -74,13 +77,13 @@ public class Parser {
 
     private Expression application(Expression in) {
 
-        List<Expression> expressions = new ArrayList<>();
         Expression expression = expressionPrime();
 
         if (expression == null) {
             return in;
         }
 
+        List<Expression> expressions = new ArrayList<>();
         while (expression != null) {
             expressions.add(expression);
             expression = expression();

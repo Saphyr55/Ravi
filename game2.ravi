@@ -1,4 +1,7 @@
 let insert l p =
+    print
+    """
+    """;
     print l;
     print p;
     """
@@ -25,14 +28,20 @@ let anotherLocation = location
     """
 end
 
-insert myLocation (proposition anotherLocation
-    """
-    Vous continuez à tenter de déblayer ?
-    """)
+begin
+    insert myLocation (proposition anotherLocation
+        """
+        Vous continuez à tenter de déblayer ?
+        """);
 
-insert myLocation (proposition anotherLocation
-    """
-    Vous continuez à tenter de déblayer.
-    """)
+    insert myLocation (proposition (location """ """)
+        """
+        Vous continuez à tenter de déblayer.
+        """);
 
+    insert myLocation (proposition (location """ """)
+        """
+        Vous continuez à tenter de déblayer.
+        """)
+end
 

@@ -23,5 +23,5 @@ public enum Kind {
     MatchKw,
     WithKw,
     Equal,
-    Semicolon, OpenParenthesis, CloseParenthesis,
+    Semicolon, OpenParenthesis, CloseParenthesis, Number, List,
 }

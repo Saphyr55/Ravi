@@ -8,7 +8,7 @@ public sealed interface Expression {
 
     record Application(Expression expr, List<Expression> args) implements Expression { }
 
-    record ExprSemicolonExpr(Expression expr, Expression result) implements Expression {}
+    record ExprSemicolonExpr(List<Expression> expressions, Expression result) implements Expression {}
 
     record LetIn(Identifier identifier, ArgList list, Expression expr, Expression result) implements Expression { }
 

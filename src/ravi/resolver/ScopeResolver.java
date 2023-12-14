@@ -63,7 +63,7 @@ public class ScopeResolver {
         }
 
         if (expression instanceof Expression.ExprSemicolonExpr expr) {
-            resolve(expr.expr());
+            expr.expressions().forEach(this::resolve);
             resolve(expr.result());
             return;
         }

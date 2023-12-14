@@ -21,10 +21,12 @@ public class Interpreter {
         this.locals = new HashMap<>();
         this.environment = new Environment();
         this.globals = environment;
+
         this.globals.define("print", new Value.Func((inter, args) -> {
             System.out.println(args.get(0));
             return null;
         }));
+
     }
 
     public void interpretProgram(Program program) {
@@ -52,30 +54,35 @@ public class Interpreter {
         }
     }
 
-    Value evaluate(Expression result) {
+    Value evaluate(Expression expression) {
 
-        if (result instanceof Expression.ParenthesisExpr expression) {
-            return evaluate(expression.expr());
+        if (expression instanceof Expression.ParenthesisExpr expr) {
+            return evaluate(expr.expr());
         }
 
-        if (result instanceof Expression.GroupExpr expression ) {
-            return evaluate(expression.expr());
+        if (expression instanceof Expression.GroupExpr expr) {
+            return evaluate(expr.expr());
         }
 
-        if (result instanceof Expression.TextExpr expression) {
-            return new Value.Str(expression.text().content());
+        if (expression instanceof Expression.TextExpr expr) {
+            return new Value.Str(expr.text().content());
         }
 
-        if (result instanceof Expression.IdentifierExpr expression) {
-            return lookUpVariable(expression.identifier().identifier(), expression);
+        if (expression instanceof Expression.IdentifierExpr expr) {
+            return lookUpVariable(expr.identifier().identifier(), expr);
         }
 
-        if (result instanceof Expression.ExprSemicolonExpr expression) {
-            evaluate(expression.expr());
-            return evaluate(expression.result());
+        if (expression instanceof Expression.ExprSemicolonExpr expr) {
+            expr.expressions().forEach(this::evaluate);
+            var result = expr.result();
+            return evaluate(result);
         }
 
-        if (result instanceof Expression.Application application) {
+        if (expression instanceof Expression.LetIn expr)  {
+            throw new RuntimeException("Not implemented yet.");
+        }
+
+        if (expression instanceof Expression.Application application) {
 
             Value value = evaluate(application.expr());
 
@@ -97,6 +104,7 @@ public class Interpreter {
 
             return value;
         }
+
         return null;
     }
 

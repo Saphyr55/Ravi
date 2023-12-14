@@ -21,7 +21,6 @@ Expr -> Expr Expr
       | let Identifier = Expr in Expr end
       | begin Expr end
       | ( Expr )
-      | epsilon
 
 List -> [ HeadList RestList ]
 
