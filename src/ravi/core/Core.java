@@ -17,4 +17,9 @@ public class Core {
     }
 
 
+    public static void loop(int n, Runnable next) {
+        for (int i = 0; i < n; i++) {
+            next.run();
+        }
+    }
 }

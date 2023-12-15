@@ -1,6 +1,6 @@
 package ravi.syntax.model;
 
-public record Program(Instruction instruction, Program program) {
+public record Program(Statement statement, Program program) {
 
 
 

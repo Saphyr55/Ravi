@@ -3,6 +3,7 @@ package ravi.syntax;
 import ravi.core.BindingManager;
 import ravi.core.Core;
 
+import java.util.Formatter;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -72,27 +73,42 @@ public class Lexer {
     }
 
     private void createTextToken() {
-        if (match(Symbol.DoubleQuote) && match(Symbol.DoubleQuote)) {
+        if (match(Symbol.DoubleQuote) && match(Symbol.DoubleQuote) && matchNewLine()) {
 
-            while (peek() != Symbol.DoubleQuote.charAt(0) && !isAtEnd()) {
-                if (peek() == '\n') line++;
-                next();
-            }
+            if (passString()) return;
 
-            if (isAtEnd()) {
-                report("Unterminated string.");
-                return;
-            }
+            Core.loop(3, this::next);
 
-            next();
-            next();
-            next();
-
-            String value = source.substring(start + 3, position - 3).strip();
+            String value = TextParsing.parse(source.substring(start, position));
             addToken(Kind.Text, value);
             return;
         }
-        report("We need three double quote.");
+        report("Missing entry block text.");
+    }
+
+    private boolean matchNewLine() {
+        String str = System.lineSeparator();
+        for (int i = 0; i < str.length(); i++) {
+            var c = str.charAt(i);
+            var cr = currentChar();
+            if (cr != c) {
+                return false;
+            }
+            next();
+        }
+        return true;
+    }
+
+    private boolean passString() {
+        while (peek() != Symbol.DoubleQuote.charAt(0) && !isAtEnd()) {
+            if (peek() == '\n') line++;
+            next();
+        }
+        if (isAtEnd()) {
+            report("Unterminated string.");
+            return true;
+        }
+        return false;
     }
 
     private char peek() {

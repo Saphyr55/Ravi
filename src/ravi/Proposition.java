@@ -1,5 +1,7 @@
 package ravi;
 
+import ravi.model.Value;
+
 /*
  * Proposition faite au joueur pour poursuivre dans l'aventure.
  * 
@@ -13,4 +15,5 @@ public class Proposition {
         this.texte = texte;
         this.numeroLieu = numeroLieu;
     }
+
 }

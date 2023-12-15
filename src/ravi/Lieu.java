@@ -15,4 +15,12 @@ public class Lieu {
         this.description = description;
         this.propositions = propositions;
     }
+
+    @Override
+    public String toString() {
+        return "Lieu{" +
+                "description='" + description + '\'' +
+                ", propositions=" + propositions +
+                '}';
+    }
 }

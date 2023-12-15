@@ -1,0 +1,145 @@
+let first = location
+    """
+    Vous reprenez conscience.\nVous êtes dans un souterrain en partie éboulé.
+    L'un des bouts de souterrain se prolonge au-delà de la portée de votre lampe;
+    Tout près de vous, des pierres et des gravats bloquent entièrement le passage.
+    Il faut maintenant sortir de là !,
+    """
+end
+
+let two = notImplLocation
+end
+
+let six = location
+    """
+    Au bout de quelques vingt ou trente mètres, le couloir se termine en cul-de-sac à cause d'un
+    éboulement.
+    """
+end
+
+let nine = location
+    """
+    Quelque vingt mètres plus loin, vous arrivez au pied d'un escalier.
+    Que faites-vous ?
+    """
+end
+
+let eleven = notImplLocation
+end
+
+let thirteen = location
+    """
+    L'éboulement est récent, et les gravats instables.
+    Dans un soudain nuage de poussière, une pluie de pierres vous ensevelit.
+    Perdez 2 points de survie. Si vous pouvez les dépenser, vous vous dégagez de la nouvelle avalanche.
+    Quelle est ensuite votre décision ?
+    """
+end
+
+let seventeen = location
+    """
+    Une nouvelle avalanche de gravats se déverse sur vous.
+    """
+end
+
+let eighteen = location
+    """
+    Une quinzaine de mètre plus loin, le couloir est creusé de deux alcôves
+    """
+end
+
+let twenty = notImplLocation
+end
+
+let twentySeven = notImplLocation
+end
+
+
+insert first
+    (proposition thirteen
+    """
+    Tentez-vous de dégager l'éboulement pour éventuellement ressortir par où avez dû entrer ?
+    """
+    );
+insert first
+    (proposition nine
+    """
+    Explorez-vous le souterrain dans l'autre direction ?
+    """
+    );
+
+
+insert six
+    (proposition thirteen
+    """
+    Faites-vous demi-tour ?
+    """
+    );
+insert six
+    (proposition twentySeven
+    """
+    Décidez-vous de vous frayez un passage à travers les gravats ?
+    """
+    );
+
+
+insert nine
+    (proposition twenty
+    """
+    Vous examinez la fresque ?
+    """
+    );
+insert nine
+    (proposition eighteen
+    """
+    Vous empruntez le couloir en face de l'escalier ?
+    """
+    );
+insert nine
+    (proposition two
+    """
+    Vous tournez à droite pour explorer le prolongement de la salle ?
+    """
+    );
+
+
+insert thirteen
+    (proposition seventeen
+    """
+    Vous continuez à tenter de déblayer ?
+    """
+    );
+insert thirteen
+    (proposition nine
+    """
+    Vous abandonnez et commencez à explorer le couloir dans l'autre sens ?
+    """
+    );
+
+
+insert seventeen
+    (proposition thirteen
+    """
+    Vous continuez coûte que coûte à déblayer ?
+    """
+    );
+insert seventeen
+    (proposition nine
+    """
+    Vous baissez les bras et commencez à explorer le couloir dans l'autre sens ?
+    """
+    );
+
+
+insert eighteen
+    (proposition eleven
+    """
+    Vous les examinez de près ?
+    """
+    );
+insert eighteen
+    (proposition six
+    """
+    Vous continuez votre chemin ?
+    """
+    );

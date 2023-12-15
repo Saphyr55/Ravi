@@ -1,7 +1,7 @@
 package ravi.resolver;
 
 import ravi.syntax.model.Expression;
-import ravi.syntax.model.Instruction;
+import ravi.syntax.model.Statement;
 import ravi.syntax.model.Program;
 
 import java.util.HashMap;
@@ -22,21 +22,20 @@ public class ScopeResolver {
     public void resolve(Program program) {
         if (program != null) {
             resolve(program.program());
-            resolve(program.instruction());
+            resolve(program.statement());
         }
     }
 
-    private void resolve(Instruction instruction) {
-        if (instruction instanceof Instruction.Let let) {
+    private void resolve(Statement statement) {
+        if (statement instanceof Statement.Let let) {
             declare(let.name().identifier());
             define(let.name().identifier());
             resolveFunction(let, FunctionType.Let);
             return;
         }
-        if (instruction instanceof Instruction.Expr expr) {
-            resolve(expr.expression());
+        if (statement instanceof Statement.Instr instr) {
+            instr.expression().forEach(this::resolve);
         }
-
     }
 
     private void resolve(Expression expression) {
@@ -62,8 +61,8 @@ public class ScopeResolver {
             return;
         }
 
-        if (expression instanceof Expression.ExprSemicolonExpr expr) {
-            expr.expressions().forEach(this::resolve);
+        if (expression instanceof Expression.Instr expr) {
+            resolve(expr.primary());
             resolve(expr.result());
             return;
         }
@@ -124,11 +123,11 @@ public class ScopeResolver {
         }
     }
 
-    private void resolveFunction(Instruction.Let let, FunctionType type) {
+    private void resolveFunction(Statement.Let let, FunctionType type) {
         FunctionType enclosingFunction = currentFunction;
         currentFunction = type;
         beginScope();
-        for (var param : let.argList().declarations()) {
+        for (var param : let.params().declarations()) {
             declare(param.identifier());
             define(param.identifier());
         }

@@ -18,8 +18,9 @@ public class Environment {
         this(null);
     }
 
-    public void define(String name, Value value) {
+    public Environment define(String name, Value value) {
         declarations.put(name, value);
+        return new Environment();
     }
 
     public Value at(Integer distance, String text) {

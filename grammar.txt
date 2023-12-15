@@ -1,26 +1,30 @@
-Program -> Instruction Program
-	     | epsilon
+Program -> Statement Program
+	    | epsilon
 
-Instruction -> Let
-	         | Expr
+Statement -> Let
+	     | Instruction
 
-Let -> let Identifier ArgList = Expr end
+Let -> let Identifier Params = Expr end
 
-ArgList -> ( ArgDeclarationList )
-         | epsilon
+Params -> Identifier Params
+       | epsilon
 
-ArgDeclarationList -> Identifier , ArgDeclarationList
-                  | Identifier
-
-Expr -> Expr Expr
-      | Expr ; Expr
+Expr -> Expr Argument
+      | Instruction
       | Text
       | List
       | Number
       | Identifier
-      | let Identifier = Expr in Expr end
-      | begin Expr end
+      | let Identifier = Expr in Expr
       | ( Expr )
+      | begin Expr end
+
+Argument -> Expr Argument
+         | epsilon
+
+Instruction -> Expr Instruction'
+Instruction' -> ; Instruction
+              | epsilon
 
 List -> [ HeadList RestList ]
 
@@ -30,17 +34,11 @@ HeadList -> Expr
 RestList -> , HeadList RestList
 	       | epsilon
 
-Text -> """ Description """
-
-Description -> AnyCharacter Description
-	         | epsilon
-
-Identifier -> Character Identifier
-            | epsilon
+Text -> text
 
 Number -> [0-9] Number
         | epsilon
 
-Character -> [_A-Za-z] Character
-           | [_A-Za-z] [_A-Za-z0-9] Character
+Identifier -> [_A-Za-z] Identifier
+           | [_A-Za-z] [_A-Za-z0-9] Identifier
            | epsilon

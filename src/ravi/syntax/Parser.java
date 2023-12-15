@@ -2,7 +2,6 @@ package ravi.syntax;
 
 import ravi.syntax.model.*;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,49 +20,65 @@ public class Parser {
      * @return
      */
     public Program program() {
-        Instruction instruction = instruction();
+        Statement statement = instruction();
         Program program = isAtEnd() ? null : program();
-        return new Program(instruction, program);
+        return new Program(statement, program);
     }
 
-    private Instruction instruction() {
+    private Statement instruction() {
         if (check(Kind.LetKw)) return let();
         return instructionExpr();
     }
 
-    private Instruction instructionExpr() {
+    private Statement instructionExpr() {
+        List<Expression> expressions = new LinkedList<>();
         Expression expression = expression();
-        return new Instruction.Expr(expression);
+        while (check(Kind.Semicolon)) {
+            consume(Kind.Semicolon, "");
+            expressions.add(expression);
+            expression = expression();
+        }
+        return new Statement.Instr(expressions);
     }
 
-    private Instruction let() {
+    private Statement let() {
 
         consume(Kind.LetKw, "We need the 'let' keyword.");
         Identifier identifier = identifier();
-        ArgList argList = argList();
+        Params params = params();
 
         consume(Kind.Equal, "We need the '=' symbol.");
 
         Expression result = expression();
         consume(Kind.EndKw, "We need the 'end' keyword to close a let declarations.");
 
-        return new Instruction.Let(identifier, argList, result);
+        return new Statement.Let(identifier, params, result);
     }
 
     private Expression expression() {
 
-        Expression in = expressionPrime();
+        Expression primary = application();
 
-        List<Expression> expressions = new LinkedList<>();
-        if (check(Kind.Semicolon)) {
-            while (check(Kind.Semicolon)) {
-                consume(Kind.Semicolon, "");
-                expressions.add(expression());
-            }
-            return new Expression.ExprSemicolonExpr(expressions, in);
+        return primary;
+    }
+
+    private Expression application() {
+
+        Expression primary = expressionPrime();
+        Expression expression = expressionPrime();
+
+        if (expression == null) {
+            return primary;
         }
 
-        return application(in);
+        List<Expression> expressions = new LinkedList<>();
+
+        while (expression != null) {
+            expressions.add(expression);
+            expression = expression();
+        }
+
+        return new Expression.Application(primary, expressions);
     }
 
     private Expression expressionPrime() {
@@ -73,23 +88,6 @@ public class Parser {
         if (check(Kind.OpenParenthesis)) return parenthesisExpr();
         if (check(Kind.Identifier)) return new Expression.IdentifierExpr(identifier());
         return null;
-    }
-
-    private Expression application(Expression in) {
-
-        Expression expression = expressionPrime();
-
-        if (expression == null) {
-            return in;
-        }
-
-        List<Expression> expressions = new ArrayList<>();
-        while (expression != null) {
-            expressions.add(expression);
-            expression = expression();
-        }
-
-        return new Expression.Application(in, expressions);
     }
 
     private Expression parenthesisExpr() {
@@ -110,7 +108,7 @@ public class Parser {
 
         consume(Kind.LetKw, "We need the 'let' keyword.");
         Identifier identifier = identifier();
-        ArgList argList = argList();
+        Params params = params();
 
         consume(Kind.Equal, "We need the '=' symbol.");
 
@@ -120,17 +118,17 @@ public class Parser {
         Expression resultIn = expression();
         consume(Kind.EndKw, "We need the 'end' keyword to close a let declarations.");
 
-        return new Expression.LetIn(identifier, argList, resultLet, resultIn);
+        return new Expression.LetIn(identifier, params, resultLet, resultIn);
     }
 
-    private ArgList argList() {
+    private Params params() {
         List<Identifier> identifiers = new LinkedList<>();
         while (check(Kind.Identifier)) {
             Token token = consume(Kind.Identifier, "We need an identifier.");
             Identifier identifier = new Identifier((String) token.value());
             identifiers.add(identifier);
         }
-        return new ArgList(identifiers);
+        return new Params(identifiers);
     }
 
     private Text text() {

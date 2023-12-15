@@ -1,0 +1,36 @@
+let myLocation = location
+  """
+  L1
+  """
+end
+
+let anotherLocation = location
+    """
+    L2
+    """
+end
+
+insert myLocation (proposition anotherLocation
+    """
+    Msg1 L2
+    """);
+
+insert myLocation (proposition (location
+    """
+    L3 Abs
+    """)
+
+    """
+    Msg2 L1
+    """);
+
+insert myLocation ( proposition (location
+    """
+    L4 Abs
+    """)
+
+    """
+    Msg3 L1
+    """);
+
+print myLocation;

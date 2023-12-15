@@ -13,4 +13,8 @@ public sealed interface Value {
 
     record Num() implements Value { }
 
+    record Unit() implements Value { }
+
+    record Any(Object content) implements Value { }
+
 }

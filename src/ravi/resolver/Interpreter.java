@@ -4,7 +4,7 @@ import ravi.model.Func;
 import ravi.model.Value;
 import ravi.syntax.model.Expression;
 import ravi.syntax.model.Identifier;
-import ravi.syntax.model.Instruction;
+import ravi.syntax.model.Statement;
 import ravi.syntax.model.Program;
 
 import java.util.HashMap;
@@ -17,39 +17,38 @@ public class Interpreter {
     private final Environment globals;
     private Environment environment;
 
-    public Interpreter() {
+    public Interpreter(Environment context) {
         this.locals = new HashMap<>();
-        this.environment = new Environment();
+        this.environment = context;
         this.globals = environment;
-
-        this.globals.define("print", new Value.Func((inter, args) -> {
-            System.out.println(args.get(0));
-            return null;
-        }));
-
     }
 
     public void interpretProgram(Program program) {
         if (program != null) {
-            interpretInstruction(program.instruction());
+            interpretInstruction(program.statement());
             interpretProgram(program.program());
         }
     }
 
-    void interpretInstruction(Instruction instruction) {
-        if (instruction instanceof Instruction.Let let) {
+    void interpretInstruction(Statement statement) {
+        if (statement instanceof Statement.Let let) {
             var name = let.name().identifier();
-            var params = let.argList()
+            var params = let.params()
                     .declarations()
                     .stream()
                     .map(Identifier::identifier)
                     .toList();
 
+            if (params.size() == 0) {
+                environment.define(name, evaluate(let.result()));
+                return;
+            }
+
             environment.define(name, new Value.Func(new Func(params, let.result(), environment)));
             return;
         }
-        if (instruction instanceof Instruction.Expr expr) {
-            evaluate(expr.expression());
+        if (statement instanceof Statement.Instr instr) {
+            instr.expression().forEach(this::evaluate);
             return;
         }
     }
@@ -72,10 +71,10 @@ public class Interpreter {
             return lookUpVariable(expr.identifier().identifier(), expr);
         }
 
-        if (expression instanceof Expression.ExprSemicolonExpr expr) {
-            expr.expressions().forEach(this::evaluate);
-            var result = expr.result();
-            return evaluate(result);
+        if (expression instanceof Expression.Instr expr) {
+            evaluate(expr.primary());
+            var e = evaluate(expr.result());
+            return e;
         }
 
         if (expression instanceof Expression.LetIn expr)  {

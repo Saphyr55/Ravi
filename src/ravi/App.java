@@ -13,6 +13,10 @@ Réalisé par :
 
 package ravi;
 
+import ravi.model.Application;
+import ravi.model.Value;
+import ravi.resolver.Environment;
+import ravi.resolver.InterpretException;
 import ravi.resolver.Interpreter;
 import ravi.resolver.ScopeResolver;
 import ravi.syntax.Lexer;
@@ -37,12 +41,16 @@ import java.util.List;
  * Gère l'IHM.
  * Affiche les lieux et propositions suivant les décisions du joueur.
  */
-
 public class App implements ActionListener {
+
+    static final List<Lieu> LIEUX = new ArrayList<>();
+    static final List<Lieu> NOT_IMPL_LIEUX = new ArrayList<>();
+    static final Map<Integer, Lieu> CONTENT = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("game2.ravi"), StandardCharsets.UTF_8);
+        String source = Files.readString(Path.of("ravi/game.ravi"), StandardCharsets.UTF_8);
+
         Lexer lexer = new Lexer(source, LinkedList::new);
         List<Token> tokens = lexer.scan();
         // System.out.println(Arrays.toString(tokens.toArray()));
@@ -51,13 +59,55 @@ public class App implements ActionListener {
         Program program = parser.program();
         // System.out.println(program);
 
-        Interpreter interpreter = new Interpreter();
+        Interpreter interpreter = new Interpreter(context());
         ScopeResolver scopeResolver = new ScopeResolver(interpreter);
 
         scopeResolver.resolve(program);
         interpreter.interpretProgram(program);
 
-        SwingUtilities.invokeLater(new App()::init);
+        for (int i = 0; i < LIEUX.size(); i++) {
+            CONTENT.put(i, LIEUX.get(i));
+        }
+
+        App app = new App();
+        SwingUtilities.invokeLater(() -> app.init(0));
+    }
+
+
+    private static Environment context() {
+
+        Environment context = new Environment();
+
+        context.define("print", Application.value(1, (inter, args) -> {
+            System.out.println(args.get(0));
+            return new Value.Unit();
+        }));
+
+        context.define("location", Application.value(1, (inter, args) -> {
+            var lieux = new Lieu(args.get(0).toString(), new ArrayList<>());
+            LIEUX.add(lieux);
+            return new Value.Any(lieux);
+        }));
+
+        context.define("notImplLocation", new Value.Any(new Lieu("", List.of())));
+
+        context.define("proposition", Application.value(2, (inter, args) -> {
+            var lieu = (Lieu) ((Value.Any) args.get(0)).content();
+            var description = args.get(1).toString();
+            return new Value.Any(new Proposition(description, LIEUX.indexOf(lieu)));
+        }));
+
+        context.define("insert", Application.value(2, (inter, args) -> {
+            if (((Value.Any) args.get(0)).content() instanceof Lieu lieu) {
+                System.out.println(LIEUX.indexOf(lieu));
+                var proposition = (Proposition) ((Value.Any) args.get(1)).content();
+                lieu.propositions.add(proposition);
+                return new Value.Unit();
+            }
+            throw new InterpretException("The function insert take a 'Lieu' and a 'proposition' as params.");
+        }));
+
+        return context;
     }
 
     // Nombre de lignes dans la zone de texte
@@ -75,10 +125,10 @@ public class App implements ActionListener {
     // Boutons de proposition
     ArrayList<JButton> btns;
 
-    public void init() {
+    public void init(int start) {
 
         // Charge le contenu de l'aventure
-        lieux = ContenuAventure.init();
+        lieux = CONTENT;
 
         // Prépare l'IHM
         labels = new JLabel[nbLignes];
@@ -104,7 +154,7 @@ public class App implements ActionListener {
         }
 
         // Démarre l'aventure au lieu n° 1
-        lieuActuel = lieux.get(1);
+        lieuActuel = lieux.get(start);
         initLieu();
 
         frame.pack();
