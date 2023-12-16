@@ -1,10 +1,11 @@
 Program -> Statement Program'
-
 Program' -> Program
         | epsilon
 
 Statement -> Let
-	     | Expr ;
+	         | Instr
+
+Instr -> Expr ;
 
 Let -> let Identifier Params = Expr end
 
@@ -28,9 +29,10 @@ Argument -> Expr Argument
 
 List -> [ Expr RestList ]
         | [ ]
-RestList -> ; Expr RestList
-        | epsilon
 
+RestList -> ; Expr RestList'
+RestList' -> RestList
+          | epsilon
 
 Text -> text
 
