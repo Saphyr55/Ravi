@@ -30,6 +30,9 @@ public final class Syntax {
         public static final String End = "end";
         @Bind(kind = Kind.ThenKw)
         public static final String Then = "then";
+        @Bind(kind = Kind.ValKw)
+        public static final String Val = "val";
+
     }
 
     public final static class Symbol {

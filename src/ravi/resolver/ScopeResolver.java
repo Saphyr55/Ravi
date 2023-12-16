@@ -1,8 +1,6 @@
 package ravi.resolver;
 
-import ravi.syntax.model.Expression;
-import ravi.syntax.model.Statement;
-import ravi.syntax.model.Program;
+import ravi.syntax.model.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +28,7 @@ public class ScopeResolver {
         if (statement instanceof Statement.Let let) {
             declare(let.name().identifier());
             define(let.name().identifier());
-            resolveFunction(let, FunctionType.Let);
+            resolveFunction(let.params(), let.result(), FunctionType.Let);
             return;
         }
         if (statement instanceof Statement.Instr instr) {
@@ -80,15 +78,33 @@ public class ScopeResolver {
 
         }
 
-        if (expression instanceof Expression.LetIn letIn) {
-
+        if (expression instanceof Expression.LetIn expr) {
+            declare(expr.name().identifier());
+            define(expr.name().identifier());
+            resolveFunction(expr.params(), expr.expr(), FunctionType.Let);
+            resolve(expr.result());
         }
 
         if (expression instanceof Expression.ListExpr expr) {
-
+            resolveList(expr.list());
         }
 
     }
+
+    private void resolveList(RaviList rlist) {
+        if (rlist instanceof RaviList.List list) {
+            resolve(list.expression());
+            resolveList(list.rest());
+        }
+    }
+
+    private void resolveList(RaviRestList rest) {
+        if (rest == null)
+            return;
+        resolve(rest.expression());
+        resolveList(rest.rest());
+    }
+
 
     private void beginScope() {
         scopes.push(new HashMap<>());
@@ -123,15 +139,15 @@ public class ScopeResolver {
         }
     }
 
-    private void resolveFunction(Statement.Let let, FunctionType type) {
+    private void resolveFunction(Params params, Expression result, FunctionType type) {
         FunctionType enclosingFunction = currentFunction;
         currentFunction = type;
         beginScope();
-        for (var param : let.params().declarations()) {
+        for (var param : params.declarations()) {
             declare(param.identifier());
             define(param.identifier());
         }
-        resolve(let.result());
+        resolve(result);
         endScope();
         currentFunction = enclosingFunction;
     }

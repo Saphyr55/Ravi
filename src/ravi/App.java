@@ -13,6 +13,7 @@ Réalisé par :
 
 package ravi;
 
+import ravi.core.NativeLet;
 import ravi.model.Application;
 import ravi.model.Value;
 import ravi.resolver.Environment;
@@ -44,12 +45,11 @@ import java.util.List;
 public class App implements ActionListener {
 
     static final List<Lieu> LIEUX = new ArrayList<>();
-    static final List<Lieu> NOT_IMPL_LIEUX = new ArrayList<>();
     static final Map<Integer, Lieu> CONTENT = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("ravi/test2.ravi"), StandardCharsets.UTF_8);
+        String source = Files.readString(Path.of("ravi/game.ravi"), StandardCharsets.UTF_8);
 
         Lexer lexer = new Lexer(source, LinkedList::new);
         List<Token> tokens = lexer.scan();
@@ -75,36 +75,41 @@ public class App implements ActionListener {
 
 
     private static Environment context() {
-
         Environment context = new Environment();
-
-        context.define("print", Application.value(1, (inter, args) -> {
-            System.out.println(args.get(0));
-            return new Value.Unit();
-        }));
+        NativeLet.genNative(context);
 
         context.define("location", Application.value(1, (inter, args) -> {
-            var lieux = new Lieu(args.get(0).toString(), new ArrayList<>());
+            var lieux = new Lieu(args.get(0).toStr(), new ArrayList<>());
             LIEUX.add(lieux);
-            return new Value.Any(lieux);
+            return Value.object(lieux);
         }));
 
-        context.define("notImplLocation", new Value.Any(new Lieu("", List.of())));
+        context.define("notImplLocation", new Value.VObject(new Lieu("", List.of())));
 
         context.define("proposition", Application.value(2, (inter, args) -> {
-            var lieu = (Lieu) ((Value.Any) args.get(0)).content();
-            var description = args.get(1).toString();
-            return new Value.Any(new Proposition(description, LIEUX.indexOf(lieu)));
+            var lieu = (Lieu) ((Value.VObject) args.get(0)).content();
+            var description = args.get(1).toStr();
+            return Value.object(new Proposition(description, LIEUX.indexOf(lieu)));
         }));
 
+        final String errorMsg = "The function 'insert' take a 'Lieu' and a 'Proposition' list as parameters.";
         context.define("insert", Application.value(2, (inter, args) -> {
-            if (((Value.Any) args.get(0)).content() instanceof Lieu lieu) {
+            if (((Value.VObject) args.get(0)).content() instanceof Lieu lieu) {
                 System.out.println(LIEUX.indexOf(lieu));
-                var proposition = (Proposition) ((Value.Any) args.get(1)).content();
-                lieu.propositions.add(proposition);
-                return new Value.Unit();
+                var propositions = ((Value.VList) args.get(1))
+                        .values()
+                        .stream()
+                        .map(value -> {
+                            if (value instanceof Value.VObject object &&
+                                    object.content() instanceof Proposition proposition) {
+                                return proposition;
+                            }
+                            throw new InterpretException(errorMsg);
+                        }).toList();
+                lieu.propositions.addAll(propositions);
+                return Value.unit();
             }
-            throw new InterpretException("The function insert take a 'Lieu' and a 'proposition' as params.");
+            throw new InterpretException(errorMsg);
         }));
 
         return context;

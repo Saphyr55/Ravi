@@ -1,6 +1,9 @@
 package ravi.resolver;
 
 import ravi.model.Value;
+import ravi.syntax.model.Expression;
+import ravi.syntax.model.Identifier;
+import ravi.syntax.model.Params;
 
 import java.util.HashMap;
 
@@ -18,9 +21,8 @@ public class Environment {
         this(null);
     }
 
-    public Environment define(String name, Value value) {
+    public void define(String name, Value value) {
         declarations.put(name, value);
-        return new Environment();
     }
 
     public Value at(Integer distance, String text) {

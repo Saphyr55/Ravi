@@ -34,9 +34,9 @@ public class Parser {
         List<Expression> expressions = new LinkedList<>();
         Expression expression = expression();
         while (check(Kind.Semicolon)) {
-            consume(Kind.Semicolon, "");
             expressions.add(expression);
             expression = expression();
+            consume(Kind.Semicolon, "We need a ';' symbole to close the instruction.");
         }
         return new Statement.Instr(expressions);
     }
@@ -56,10 +56,7 @@ public class Parser {
     }
 
     private Expression expression() {
-
-        Expression primary = application();
-
-        return primary;
+        return application();
     }
 
     private Expression application() {
@@ -82,13 +79,23 @@ public class Parser {
     }
 
     private Expression expressionPrime() {
-        if (check(Kind.Text)) return new Expression.TextExpr(text());
-        // if (check(Kind.LetKw)) return letIn();
+        if (check(Kind.String)) return stringExpr();
+        if (check(Kind.Text)) return textExpr();
+        if (check(Kind.LetKw)) return letIn();
         if (check(Kind.BeginKw)) return groupExpr();
         if (check(Kind.OpenParenthesis)) return parenthesisExpr();
         if (check(Kind.Identifier)) return new Expression.IdentifierExpr(identifier());
         if (check(Kind.OpenSquareBracket)) return listExpr();
         return null;
+    }
+
+    private Expression textExpr() {
+        return new Expression.TextExpr(text());
+    }
+
+    private Expression stringExpr() {
+        Token token = consume(Kind.String, "We need a string.");
+        return new Expression.StringExpr((String) token.value());
     }
 
     private Expression listExpr() {
@@ -116,6 +123,7 @@ public class Parser {
         consume(Kind.OpenParenthesis, "We need a '(' symbol.");
         Expression expression = expression();
         consume(Kind.CloseParenthesis, "We need a ')' symbol.");
+        if (expression == null) return new Expression.UnitExpr();
         return new Expression.ParenthesisExpr(expression);
     }
 
@@ -136,9 +144,7 @@ public class Parser {
 
         Expression resultLet = expression();
         consume(Kind.InKw, "We need the 'in' keyword to close a let declarations.");
-
         Expression resultIn = expression();
-        consume(Kind.EndKw, "We need the 'end' keyword to close a let declarations.");
 
         return new Expression.LetIn(identifier, params, resultLet, resultIn);
     }
@@ -146,7 +152,7 @@ public class Parser {
     private Params params() {
         List<Identifier> identifiers = new LinkedList<>();
         while (check(Kind.Identifier)) {
-            Token token = consume(Kind.Identifier, "We need an identifier.");
+            Token token = consume(Kind.Identifier, "We need an name.");
             Identifier identifier = new Identifier((String) token.value());
             identifiers.add(identifier);
         }
@@ -159,7 +165,7 @@ public class Parser {
     }
 
     private Identifier identifier() {
-        Token identifier = consume(Kind.Identifier, "We need an identifier.");
+        Token identifier = consume(Kind.Identifier, "We need an name.");
         return new Identifier((String) identifier.value());
     }
 

@@ -24,6 +24,7 @@ public enum Kind {
     NativeKw,
     MatchKw,
     WithKw,
+    ValKw,
     Equal,
     Semicolon,
     OpenParenthesis,

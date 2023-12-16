@@ -28,21 +28,10 @@ public class Interpreter {
         }
     }
 
+
     void interpretInstruction(Statement statement) {
         if (statement instanceof Statement.Let let) {
-            var name = let.name().identifier();
-            var params = let.params()
-                    .declarations()
-                    .stream()
-                    .map(Identifier::identifier)
-                    .toList();
-
-            if (params.size() == 0) {
-                environment.define(name, evaluate(let.result()));
-                return;
-            }
-
-            environment.define(name, new Value.Func(new Func(params, let.result(), environment)));
+            defineFunction(environment, let.name(), let.params(), let.result());
             return;
         }
         if (statement instanceof Statement.Instr instr) {
@@ -60,6 +49,10 @@ public class Interpreter {
 
     Value evaluate(Expression expression) {
 
+        if (expression instanceof Expression.UnitExpr) {
+            return new Value.VUnit();
+        }
+
         if (expression instanceof  Expression.ListExpr expr) {
             ArrayList<Value> values = new ArrayList<>();
             if (expr.list() instanceof RaviList.EmptyList){
@@ -71,6 +64,10 @@ public class Interpreter {
             return new Value.VList(values);
         }
 
+        if (expression instanceof Expression.StringExpr expr) {
+            return new Value.VString(expr.content());
+        }
+
         if (expression instanceof Expression.ParenthesisExpr expr) {
             return evaluate(expr.expr());
         }
@@ -80,7 +77,7 @@ public class Interpreter {
         }
 
         if (expression instanceof Expression.TextExpr expr) {
-            return new Value.Str(expr.text().content());
+            return new Value.VString(expr.text().content());
         }
 
         if (expression instanceof Expression.IdentifierExpr expr) {
@@ -89,12 +86,12 @@ public class Interpreter {
 
         if (expression instanceof Expression.Instr expr) {
             evaluate(expr.primary());
-            var e = evaluate(expr.result());
-            return e;
+            return evaluate(expr.result());
         }
 
         if (expression instanceof Expression.LetIn expr)  {
-            throw new RuntimeException("Not implemented yet.");
+            defineFunction(environment, expr.name(), expr.params(), expr.expr());
+            return evaluate(expr.result());
         }
 
         if (expression instanceof Expression.Application application) {
@@ -106,15 +103,15 @@ public class Interpreter {
                     .stream()
                     .map(this::evaluate)
                     .map(v -> {
-                        if (v instanceof Value.Func f && f.application().arity() == 0) {
+                        if (v instanceof Value.VApplication f && f.application().arity() == 0) {
                             return f.application().apply(this, List.of());
                         }
                         return v;
                     })
                     .toList();
 
-            if (value instanceof Value.Func func) {
-                return func.application().apply(this, args);
+            if (value instanceof Value.VApplication VApplication) {
+                return VApplication.application().apply(this, args);
             }
 
             return value;
@@ -145,5 +142,19 @@ public class Interpreter {
             this.environment = previous;
         }
     }
+
+    void defineFunction(Environment env, Identifier name, Params params, Expression result) {
+        if (params.declarations().isEmpty()) {
+            env.define(name.identifier(), evaluate(result));
+            return;
+        }
+        env.define(name.identifier(),
+                new Value.VApplication(new Func(params
+                    .declarations()
+                    .stream()
+                    .map(Identifier::identifier)
+                    .toList(), result, env)));
+    }
+
 
 }

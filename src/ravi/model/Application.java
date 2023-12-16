@@ -11,8 +11,8 @@ public interface Application {
 
     default int arity() { return 0; }
 
-    static Value.Func value(int arity, Application application) {
-        return new Value.Func(new Application() {
+    static Value.VApplication value(int arity, Application application) {
+        return new Value.VApplication(new Application() {
             @Override
             public Value apply(Interpreter inter, List<Value> args) {
                 return application.apply(inter, args);

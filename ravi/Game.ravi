@@ -55,91 +55,90 @@ let twentySeven = notImplLocation
 end
 
 
-insert first
+insert first [
   (proposition thirteen
   """
   Tentez-vous de dégager l'éboulement pour éventuellement ressortir par où avez dû entrer ?
   """
   );
-insert first
   (proposition nine
   """
   Explorez-vous le souterrain dans l'autre direction ?
   """
-  );
+  )
+];
 
-
-insert six
+insert six [
   (proposition thirteen
   """
   Faites-vous demi-tour ?
   """
   );
-insert six
   (proposition twentySeven
   """
   Décidez-vous de vous frayez un passage à travers les gravats ?
   """
-  );
+  )
+];
 
 
-insert nine
+insert nine [
   (proposition twenty
   """
   Vous examinez la fresque ?
   """
   );
-insert nine
   (proposition eighteen
   """
   Vous empruntez le couloir en face de l'escalier ?
   """
   );
-insert nine
   (proposition two
   """
   Vous tournez à droite pour explorer le prolongement de la salle ?
   """
-  );
+  )
+];
 
 
-insert thirteen
+insert thirteen [
   (proposition seventeen
   """
   Vous continuez à tenter de déblayer ?
   """
   );
-insert thirteen
   (proposition nine
   """
   Vous abandonnez et commencez à explorer le couloir dans l'autre sens ?
   """
-  );
+  )
+];
 
 
-insert seventeen
+insert seventeen [
   (proposition thirteen
   """
   Vous continuez coûte que coûte à déblayer ?
   """
   );
-insert seventeen
   (proposition nine
   """
   Vous baissez les bras et commencez à explorer le couloir dans l'autre sens ?
   """
-  );
+  )
+];
 
 
-insert eighteen
+insert eighteen [
   (proposition eleven
   """
   Vous les examinez de près ?
   """
   );
-insert eighteen
   (proposition six
   """
   Vous continuez votre chemin ?
   """
-  );
+  )
+];
+

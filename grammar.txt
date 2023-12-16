@@ -14,15 +14,15 @@ Params -> Identifier Params
 
 Expr -> Expr Argument
       | Literal
-      | List //not implemented yet
+      | List
       | Identifier
-      | let Identifier = Expr in Expr //not implemented yet
+      | let Identifier Params = Expr in Expr //not implemented yet
       | ( Expr )
       | begin Expr end
 
-Literal -> Number //not Implemented yet
+Literal -> Number
         | Text
-        | String //not implemented yet
+        | String
 
 Argument -> Expr Argument
          | epsilon

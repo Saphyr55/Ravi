@@ -1,0 +1,38 @@
+
+let testList =
+  [ "a"
+  ; begin
+      ("0")
+    end
+  ; "9"
+  ]
+end
+
+let map x f = f x
+end
+
+let testUniqueList = [ "7" ]
+end
+
+let testEmptyList = [ ]
+end
+
+print testList;
+print testUniqueList;
+print testEmptyList;
+
+let concatListAndPrint = print
+  begin
+    concat testList [ "2"; () ]
+  end
+end
+
+concatListAndPrint;
+
+let f msg phi =
+  let t = "Andy" in
+  let s = "Matthieu" in
+  phi (format msg [t; s])
+end
+
+f "Hello, %s and %s!" print;

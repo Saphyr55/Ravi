@@ -1,0 +1,14 @@
+let myLocation = location
+  """
+  L1
+  """
+end
+
+let anotherLocation = location
+  """
+  L2
+  """
+end
+
+let myLocation = append [
+
