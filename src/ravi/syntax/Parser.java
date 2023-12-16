@@ -92,7 +92,6 @@ public class Parser {
     }
 
     private Expression listExpr() {
-
         consume(Kind.OpenSquareBracket, "We need a '[' symbol.");
         if (check((Kind.CloseSquareBracket))){
             consume(Kind.CloseSquareBracket,"");
@@ -106,12 +105,11 @@ public class Parser {
 
     private RaviRestList restList() {
         if (check((Kind.CloseSquareBracket))){
-            consume(Kind.CloseSquareBracket,"");
             return null;
         }
         consume(Kind.Semicolon, "We need a ';' symbol.");
         Expression expr = expression();
-        return new RaviRestList(expr,restList());
+        return new RaviRestList(expr, restList());
     }
 
     private Expression parenthesisExpr() {

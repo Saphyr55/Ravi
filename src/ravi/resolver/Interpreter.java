@@ -65,6 +65,7 @@ public class Interpreter {
             if (expr.list() instanceof RaviList.EmptyList){
                 return new Value.VList(new ArrayList<>());
             } else if (expr.list() instanceof RaviList.List list) {
+                values.add(evaluate(list.expression()));
                 evaluateList(list.rest(),values);
             }
             return new Value.VList(values);
