@@ -1,5 +1,7 @@
 package ravi.model;
 
+import java.util.List;
+
 public sealed interface Value {
 
     record Func(Application application) implements Value { }
@@ -16,5 +18,7 @@ public sealed interface Value {
     record Unit() implements Value { }
 
     record Any(Object content) implements Value { }
+
+    record VList(List<Value> values) implements Value { }
 
 }

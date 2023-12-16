@@ -15,17 +15,17 @@ public class Parser {
     }
 
     /**
-     * Program -> Instruction Program | epsilon
+     * Program -> Statement Program | epsilon
      *
      * @return
      */
     public Program program() {
-        Statement statement = instruction();
+        Statement statement = statement();
         Program program = isAtEnd() ? null : program();
         return new Program(statement, program);
     }
 
-    private Statement instruction() {
+    private Statement statement() {
         if (check(Kind.LetKw)) return let();
         return instructionExpr();
     }
@@ -87,7 +87,31 @@ public class Parser {
         if (check(Kind.BeginKw)) return groupExpr();
         if (check(Kind.OpenParenthesis)) return parenthesisExpr();
         if (check(Kind.Identifier)) return new Expression.IdentifierExpr(identifier());
+        if (check(Kind.OpenSquareBracket)) return listExpr();
         return null;
+    }
+
+    private Expression listExpr() {
+
+        consume(Kind.OpenSquareBracket, "We need a '[' symbol.");
+        if (check((Kind.CloseSquareBracket))){
+            consume(Kind.CloseSquareBracket,"");
+            return new Expression.ListExpr(new RaviList.EmptyList());
+        }
+        Expression expression = expression();
+        RaviRestList rest = restList();
+        consume(Kind.CloseSquareBracket, "We need a ']' symbol.");
+        return new Expression.ListExpr(new RaviList.List(expression,rest));
+    }
+
+    private RaviRestList restList() {
+        if (check((Kind.CloseSquareBracket))){
+            consume(Kind.CloseSquareBracket,"");
+            return null;
+        }
+        consume(Kind.Semicolon, "We need a ';' symbol.");
+        Expression expr = expression();
+        return new RaviRestList(expr,restList());
     }
 
     private Expression parenthesisExpr() {

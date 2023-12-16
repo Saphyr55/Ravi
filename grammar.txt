@@ -1,8 +1,10 @@
-Program -> Statement Program
-	    | epsilon
+Program -> Statement Program'
+
+Program' -> Program
+        | epsilon
 
 Statement -> Let
-	     | Instruction
+	     | Expr ;
 
 Let -> let Identifier Params = Expr end
 
@@ -10,29 +12,25 @@ Params -> Identifier Params
        | epsilon
 
 Expr -> Expr Argument
-      | Instruction
-      | Text
-      | List
-      | Number
+      | Literal
+      | List //not implemented yet
       | Identifier
-      | let Identifier = Expr in Expr
+      | let Identifier = Expr in Expr //not implemented yet
       | ( Expr )
       | begin Expr end
+
+Literal -> Number //not Implemented yet
+        | Text
+        | String //not implemented yet
 
 Argument -> Expr Argument
          | epsilon
 
-Instruction -> Expr Instruction'
-Instruction' -> ; Instruction
-              | epsilon
+List -> [ Expr RestList ]
+        | [ ]
+RestList -> ; Expr RestList
+        | epsilon
 
-List -> [ HeadList RestList ]
-
-HeadList -> Expr
-		| epsilon
-
-RestList -> , HeadList RestList
-	       | epsilon
 
 Text -> text
 
@@ -42,3 +40,4 @@ Number -> [0-9] Number
 Identifier -> [_A-Za-z] Identifier
            | [_A-Za-z] [_A-Za-z0-9] Identifier
            | epsilon
+

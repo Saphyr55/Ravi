@@ -2,11 +2,9 @@ package ravi.resolver;
 
 import ravi.model.Func;
 import ravi.model.Value;
-import ravi.syntax.model.Expression;
-import ravi.syntax.model.Identifier;
-import ravi.syntax.model.Statement;
-import ravi.syntax.model.Program;
+import ravi.syntax.model.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +51,24 @@ public class Interpreter {
         }
     }
 
+    void evaluateList(RaviRestList rest,List<Value> values) {
+        if(rest == null)
+            return;
+        values.add(evaluate(rest.expression()));
+        evaluateList(rest.rest(),values);
+    }
+
     Value evaluate(Expression expression) {
+
+        if (expression instanceof  Expression.ListExpr expr) {
+            ArrayList<Value> values = new ArrayList<>();
+            if (expr.list() instanceof RaviList.EmptyList){
+                return new Value.VList(new ArrayList<>());
+            } else if (expr.list() instanceof RaviList.List list) {
+                evaluateList(list.rest(),values);
+            }
+            return new Value.VList(values);
+        }
 
         if (expression instanceof Expression.ParenthesisExpr expr) {
             return evaluate(expr.expr());

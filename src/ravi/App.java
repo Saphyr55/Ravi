@@ -49,7 +49,7 @@ public class App implements ActionListener {
 
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("ravi/game.ravi"), StandardCharsets.UTF_8);
+        String source = Files.readString(Path.of("ravi/test2.ravi"), StandardCharsets.UTF_8);
 
         Lexer lexer = new Lexer(source, LinkedList::new);
         List<Token> tokens = lexer.scan();

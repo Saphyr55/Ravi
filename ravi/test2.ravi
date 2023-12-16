@@ -1,0 +1,24 @@
+let testList = [
+    """
+    7
+    """;
+    """
+    8
+    """;
+    """
+    9
+    """]
+end
+
+let testUniqueList = [
+    """
+    7
+    """]
+end
+
+let testEmptyList = [ ]
+end
+
+print testList;
+print testUniqueList;
+print testEmptyList;
