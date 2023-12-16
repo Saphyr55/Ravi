@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 /*
  * Classe principale.
@@ -74,7 +75,15 @@ public class App implements ActionListener {
     }
 
 
-    private static Environment context() {
+    static Proposition mapValueToProposition(Value value) {
+        if (value instanceof Value.VObject object &&
+                object.content() instanceof Proposition proposition) {
+            return proposition;
+        }
+        throw new InterpretException("The function 'insert' take a 'Proposition' list as second parameter.");
+    }
+
+    static Environment context() {
         Environment context = new Environment();
         NativeLet.genNative(context);
 
@@ -92,24 +101,16 @@ public class App implements ActionListener {
             return Value.object(new Proposition(description, LIEUX.indexOf(lieu)));
         }));
 
-        final String errorMsg = "The function 'insert' take a 'Lieu' and a 'Proposition' list as parameters.";
         context.define("insert", Application.value(2, (inter, args) -> {
             if (((Value.VObject) args.get(0)).content() instanceof Lieu lieu) {
-                System.out.println(LIEUX.indexOf(lieu));
-                var propositions = ((Value.VList) args.get(1))
+                lieu.propositions.addAll(((Value.VList) args.get(1))
                         .values()
                         .stream()
-                        .map(value -> {
-                            if (value instanceof Value.VObject object &&
-                                    object.content() instanceof Proposition proposition) {
-                                return proposition;
-                            }
-                            throw new InterpretException(errorMsg);
-                        }).toList();
-                lieu.propositions.addAll(propositions);
+                        .map(App::mapValueToProposition)
+                        .toList());
                 return Value.unit();
             }
-            throw new InterpretException(errorMsg);
+            throw new InterpretException("The function 'insert' take a 'Lieu' list as first parameter.");
         }));
 
         return context;
