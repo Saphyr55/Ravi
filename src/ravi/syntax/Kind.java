@@ -2,10 +2,8 @@ package ravi.syntax;
 
 public enum Kind {
 
-
     EOF,
     Unknown,
-    NewLine,
 
     // Literal
     String,
