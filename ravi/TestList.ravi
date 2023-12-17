@@ -18,11 +18,9 @@ print testList;
 print testUniqueList;
 print testEmptyList;
 
-let concatListAndPrint = print
+let concatListAndPrint _ = print
   (concat testList [ "2"; () ])
 end
-
-concatListAndPrint;
 
 let f msg phi =
   let t = "Andy" in
@@ -30,11 +28,12 @@ let f msg phi =
   phi (format msg [t; s])
 end
 
+concatListAndPrint ();
 f "Hello, %s and %s!" print;
 
-let g x =
+let fRec x =
   let _ = print x in
-  g x
+  fRec x
 end
 
-g "p";
+fRec "p";

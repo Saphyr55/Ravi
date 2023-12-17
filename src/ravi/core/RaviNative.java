@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface RaviNativeLet {
+public @interface RaviNative {
 
     String name() default "";
 

@@ -13,7 +13,7 @@ Réalisé par :
 
 package ravi;
 
-import ravi.core.NativeLet;
+import ravi.core.NativeDeclaration;
 import ravi.model.Application;
 import ravi.model.Value;
 import ravi.resolver.Environment;
@@ -35,7 +35,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
-import java.util.function.Function;
 
 /*
  * Classe principale.
@@ -50,15 +49,13 @@ public class App implements ActionListener {
 
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("ravi/TestList.ravi"), StandardCharsets.UTF_8);
+        String source = Files.readString(Path.of("ravi/Game.ravi"), StandardCharsets.UTF_8);
 
         Lexer lexer = new Lexer(source, LinkedList::new);
         List<Token> tokens = lexer.scan();
-        // System.out.println(Arrays.toString(tokens.toArray()));
 
         Parser parser = new Parser(tokens);
         Program program = parser.program();
-        // System.out.println(program);
 
         Interpreter interpreter = new Interpreter(context());
 
@@ -85,7 +82,7 @@ public class App implements ActionListener {
 
     static Environment context() {
         Environment context = new Environment();
-        NativeLet.genNative(context);
+        NativeDeclaration.genNative(context);
 
         context.define("location", Application.value(1, (inter, args) -> {
             var lieux = new Lieu(args.get(0).toStr(), new ArrayList<>());
