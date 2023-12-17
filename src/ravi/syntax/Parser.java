@@ -116,7 +116,16 @@ public class Parser {
         if (check(Kind.MatchKw)) return patternMatching();
         if (check(Kind.FunKw)) return lambdaExpr();
         if (check(Kind.CapitalizedIdentifier)) return moduleCallExpr();
+        if (check(Kind.Int)) return integerExpr();
+        if (check(Kind.Float)) return floatExpr();
+
         return null;
+    }
+    private Expression floatExpr() {
+        return new Expression.ConstantExpr(cFloat());
+    }
+    private Expression integerExpr() {
+        return new Expression.ConstantExpr(integer());
     }
 
     private Expression moduleCallExpr() {
@@ -266,9 +275,12 @@ public class Parser {
     }
 
     private Constant constant() {
+        Token c = currentToken();
         if (check(Kind.OpenSquareBracket)) return emptyListConstant();
         if (check(Kind.Text)) return text();
         if (check(Kind.String)) return string();
+        if (check(Kind.Int)) return integer();
+        if (check(Kind.Float)) return cFloat();
         return null;
     }
 
@@ -276,6 +288,16 @@ public class Parser {
         consume(Kind.OpenSquareBracket, "We need a '[' symbol.");
         consume(Kind.CloseSquareBracket,"We need a ']' symbol.");
         return new Constant.CEmptyList();
+    }
+
+    private Constant integer() {
+        Token token = consume(Kind.Int,"We need a integer.");
+        return new Constant.CInt((Integer)token.value());
+    }
+
+    private Constant cFloat() {
+        Token token = consume(Kind.Float,"We need a float.");
+        return new Constant.CFloat((Float) token.value());
     }
 
     private Constant text() {

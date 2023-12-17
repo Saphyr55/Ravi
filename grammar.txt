@@ -35,7 +35,7 @@ Pattern -> _
         | ( Pattern )
         | Constant
 
-Constant -> Number // Not implemented yet
+Constant -> Int
         | Text
         | String
         | [ ]
@@ -53,7 +53,7 @@ RestList' -> RestList
 
 Text -> text
 
-Number -> [0-9]* // Not implemented yet
+Int -> [0-9]*
 
 ValueName -> LowercaseIdentifier
 

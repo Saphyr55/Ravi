@@ -11,7 +11,8 @@ public sealed interface Value {
 
     record VString(String content) implements Value { }
 
-    record VNumber(Number number) implements Value { }
+    record VInt(Integer integer) implements Value { }
+    record VFloat(Float cFloat) implements Value { }
 
     record VUnit() implements Value { }
 
@@ -27,7 +28,7 @@ public sealed interface Value {
 
     static VObject object(Object content) { return new VObject(content); }
 
-    static VNumber number(Number number) { return new VNumber(number); }
+    static VInt integer(Integer integer) { return new VInt(integer); }
 
     static VString string(String content) { return new VString(content); }
 
@@ -49,8 +50,11 @@ public sealed interface Value {
          if (this instanceof VUnit) {
              return "()";
          }
-         if (this instanceof VNumber number) {
-             return number.number.toString();
+         if (this instanceof VInt number) {
+             return number.integer.toString();
+         }
+         if (this instanceof VFloat vFloat) {
+             return vFloat.cFloat.toString();
          }
          if (this instanceof VApplication) {
              return "<application>";

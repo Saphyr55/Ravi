@@ -57,11 +57,33 @@ public class Lexer {
     }
 
     private void addDefaultToken(String c) {
+        if (Character.isDigit(c.charAt(0))){
+            addNumberToken(c.charAt(0));
+            return;
+        }
         if (Core.isAlpha(c.charAt(0))) {
             addIdentifierToken(c.charAt(0));
             return;
         }
         report("Unexpected character.");
+    }
+
+    private void addNumberToken(char c) {
+        while(Character.isDigit(peek())){
+            next();
+        }
+        if(peek() == '.' ){
+            next();
+            while(Character.isDigit(peek())){
+                next();
+            }
+            String text = source.substring(start, position);
+            addToken(Kind.Float,Float.parseFloat(text));
+        }
+        else{
+            String text = source.substring(start, position);
+            addToken(Kind.Int,Integer.parseInt(text));
+        }
     }
 
     private void addIdentifierToken(char c) {

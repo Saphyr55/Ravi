@@ -2,7 +2,8 @@ package ravi.syntax.ast;
 
 public sealed interface Constant {
 
-    record CNumber(Number number) implements Constant { }
+    record CInt(Integer integer) implements Constant { }
+    record CFloat(Float cFloat) implements Constant { }
 
     record CText(String content) implements Constant { }
 

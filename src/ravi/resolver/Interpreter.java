@@ -202,8 +202,12 @@ public class Interpreter {
             return new Value.VList(List.of());
         }
 
-        if (constant instanceof Constant.CNumber number) {
-            return new Value.VNumber(number.number());
+        if (constant instanceof Constant.CInt integer) {
+            return new Value.VInt(integer.integer());
+        }
+
+        if (constant instanceof Constant.CFloat cFloat){
+            return new Value.VFloat(cFloat.cFloat());
         }
 
         if (constant instanceof Constant.CUnit) {

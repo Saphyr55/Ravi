@@ -58,6 +58,8 @@ RestList' -> RestList
 
 Text -> text
 
+String -> string
+
 Number -> [0-9]* // Not implemented yet
 
 ValueName -> LowercaseIdentifier
@@ -65,15 +67,13 @@ ValueName -> LowercaseIdentifier
 ModuleName -> CapitalizedIdentifier
 
 CapitalizedIdentifier -> [A-Z] CapitalizedIdentifier'
-
-CapitalizedIdentifier' -> Identifier
-                        | [_A-Za-z0-9] Identifier
+CapitalizedIdentifier' -> CapitalizedIdentifier
+                        | [_A-Za-z0-9] CapitalizedIdentifier
                         | epsilon
 
 LowercaseIdentifier -> [_a-z] LowercaseIdentifier'
-
-LowercaseIdentifier' -> Identifier
-                    | [_A-Za-z0-9] Identifier
+LowercaseIdentifier' -> LowercaseIdentifier
+                    | [_A-Za-z0-9] LowercaseIdentifier
                     | epsilon
 
 

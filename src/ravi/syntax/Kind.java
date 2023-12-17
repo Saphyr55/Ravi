@@ -10,7 +10,8 @@ public enum Kind {
     Text,
     CapitalizedIdentifier,
     LowercaseIdentifier,
-    Number,
+    Int,
+    Float,
 
     // Symbol
     OpenSquareBracket,
