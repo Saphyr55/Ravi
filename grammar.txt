@@ -18,6 +18,7 @@ Expr -> Expr Argument
       | Constant
       | Identifier
       | let Identifier Params = Expr in Expr
+      | fun Param -> Expr
       | ( Expr )
       | begin Expr end
       | match Expr with Pattern

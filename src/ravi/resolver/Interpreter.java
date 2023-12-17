@@ -6,6 +6,7 @@ import ravi.syntax.ast.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Interpreter {
 
@@ -42,6 +43,15 @@ public class Interpreter {
 
     Value evaluate(Expression expression) {
 
+        if (expression instanceof Expression.ConsCell consCell) {
+            Value head = evaluate(consCell.head());
+            Value tail = evaluate(consCell.tail());
+            if (tail instanceof Value.VList list) {
+                return Value.list(Stream.concat(Stream.of(head), list.values().stream()).toList());
+            }
+            throw new InterpretException();
+        }
+
         if (expression instanceof Expression.PatternMatching pm) {
             Value value = evaluate(pm.expression());
             for (int i = 0; i < pm.patterns().size(); i++) {
@@ -50,6 +60,14 @@ public class Interpreter {
                 }
             }
             return Value.unit();
+        }
+
+        if (expression instanceof Expression.Lambda lambda) {
+            return new Value.VApplication(new Func(lambda.params()
+                    .declarations()
+                    .stream()
+                    .map(Identifier::name)
+                    .toList(), lambda.expression(), environment));
         }
 
         if (expression instanceof Expression.UnitExpr) {

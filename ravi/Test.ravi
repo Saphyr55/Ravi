@@ -47,4 +47,17 @@ let isEmpty l =
 end
 
 print (isEmpty []);
-print (isEmpty ["8"]);
+print (isEmpty ("8" :: "8" :: []));
+
+let map f l =
+  match l with
+  | [] -> []
+  | h :: t -> (f h) :: map f t
+end
+
+let mapTestList f = map f testList
+end
+
+print (mapTestList (fun e -> format "Element: %s" [e]));
+
+

@@ -30,5 +30,6 @@ public sealed interface Expression {
                            List<Expression> expressions)
             implements Expression { }
 
+    record Lambda(Params params, Expression expression) implements Expression { }
 
 }

@@ -60,7 +60,13 @@ public class Parser {
     private Expression application() {
 
         Expression primary = expressionPrime();
-        Expression expression = consCell(primary);
+        Expression expression = expressionPrime();
+
+        if (check(Kind.DoubleColon)) {
+            consume(Kind.DoubleColon, "");
+            Expression tail = expression();
+            return new Expression.ConsCell(primary, tail);
+        }
 
         if (expression == null) {
             return primary;
@@ -76,14 +82,6 @@ public class Parser {
         return new Expression.Application(primary, expressions);
     }
 
-    private Expression consCell(Expression head) {
-        if (check(Kind.DoubleColon)) {
-            consume(Kind.DoubleColon, "");
-            Expression tail = expression();
-            return new Expression.ConsCell(head, tail);
-        }
-        return expressionPrime();
-    }
 
     private Expression expressionPrime() {
         if (check(Kind.String)) return stringExpr();
@@ -94,7 +92,16 @@ public class Parser {
         if (check(Kind.Identifier)) return new Expression.IdentifierExpr(identifier());
         if (check(Kind.OpenSquareBracket)) return listExpr();
         if (check(Kind.MatchKw)) return patternMatching();
+        if (check(Kind.FunKw)) return lambdaExpr();
         return null;
+    }
+
+    private Expression lambdaExpr() {
+        consume(Kind.FunKw, "We need the 'fun' keyword to declare a lambda");
+        Params params = params();
+        consume(Kind.Arrow, "We need the '->' symbol to specifies an expression for the lambda.");
+        Expression expression = expression();
+        return new Expression.Lambda(params, expression);
     }
 
     private Expression patternMatching() {
