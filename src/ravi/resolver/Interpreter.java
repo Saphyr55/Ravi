@@ -2,13 +2,10 @@ package ravi.resolver;
 
 import ravi.model.Func;
 import ravi.model.Value;
-import ravi.syntax.model.*;
+import ravi.syntax.ast.*;
 
-import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Interpreter {
 
@@ -45,8 +42,18 @@ public class Interpreter {
 
     Value evaluate(Expression expression) {
 
+        if (expression instanceof Expression.PatternMatching pm) {
+            Value value = evaluate(pm.expression());
+            for (int i = 0; i < pm.patterns().size(); i++) {
+                if (patternMatch(pm.patterns().get(i), value)) {
+                    return evaluate(pm.expressions().get(i));
+                }
+            }
+            return Value.unit();
+        }
+
         if (expression instanceof Expression.UnitExpr) {
-            return new Value.VUnit();
+            return Value.unit();
         }
 
         if (expression instanceof  Expression.ListExpr expr) {
@@ -57,11 +64,11 @@ public class Interpreter {
                 values.add(evaluate(list.head()));
                 evaluateList(list.tail(),values);
             }
-            return new Value.VList(values);
+            return Value.list(values);
         }
 
-        if (expression instanceof Expression.StringExpr expr) {
-            return new Value.VString(expr.content());
+        if (expression instanceof Expression.ConstantExpr expr) {
+            return evaluate(expr.constant());
         }
 
         if (expression instanceof Expression.ParenthesisExpr expr) {
@@ -70,10 +77,6 @@ public class Interpreter {
 
         if (expression instanceof Expression.GroupExpr expr) {
             return evaluate(expr.expr());
-        }
-
-        if (expression instanceof Expression.TextExpr expr) {
-            return new Value.VString(expr.text().content());
         }
 
         if (expression instanceof Expression.IdentifierExpr expr) {
@@ -113,6 +116,60 @@ public class Interpreter {
         }
 
         return null;
+    }
+
+    private boolean patternMatch(Pattern pattern, Value value) {
+
+        if (pattern instanceof Pattern.PAny) {
+            return true;
+        }
+
+        if (pattern instanceof Pattern.PIdentifier identifier) {
+            environment.define(identifier.identifier().name(), value);
+            return true;
+        }
+
+        if (pattern instanceof Pattern.PCons cons && value instanceof Value.VList list) {
+            return !list.values().isEmpty() &&
+                    patternMatch(cons.head(), list.values().get(0)) &&
+                    patternMatch(cons.tail(), new Value.VList(list.values().subList(1, list.values().size())));
+        }
+
+        if (pattern instanceof Pattern.PConstant constant) {
+            Value v = evaluate(constant.constant());
+            return value.equals(v);
+        }
+
+        if (pattern instanceof Pattern.PGroup pGroup) {
+            return patternMatch(pGroup.inner(), value);
+        }
+
+        return false;
+    }
+
+    private Value evaluate(Constant constant) {
+
+        if (constant instanceof Constant.CString cString) {
+            return new Value.VString(cString.content());
+        }
+
+        if (constant instanceof Constant.CText cText) {
+            return new Value.VString(cText.content());
+        }
+
+        if (constant instanceof Constant.CEmptyList) {
+            return new Value.VList(List.of());
+        }
+
+        if (constant instanceof Constant.CNumber number) {
+            return new Value.VNumber(number.number());
+        }
+
+        if (constant instanceof Constant.CUnit) {
+            return new Value.VUnit();
+        }
+
+        throw new InterpretException();
     }
 
     private Value lookUpDeclaration(String name) {

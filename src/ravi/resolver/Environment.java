@@ -1,9 +1,6 @@
 package ravi.resolver;
 
 import ravi.model.Value;
-import ravi.syntax.model.Expression;
-import ravi.syntax.model.Identifier;
-import ravi.syntax.model.Params;
 
 import java.util.HashMap;
 

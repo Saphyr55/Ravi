@@ -24,6 +24,8 @@ public enum Kind {
     OpenParenthesis,
     CloseParenthesis,
     Pipe,
+    Arrow,
+    Minus,
 
     // Keywords
     OpenKw,
@@ -48,4 +50,6 @@ public enum Kind {
     BeginKw,
     EndKw,
     InKw,
+    WhenKw,
+
 }

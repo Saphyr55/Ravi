@@ -1,9 +1,8 @@
 package ravi.syntax;
 
-import ravi.syntax.model.*;
+import ravi.syntax.ast.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Parser {
 
@@ -86,7 +85,6 @@ public class Parser {
         return expressionPrime();
     }
 
-
     private Expression expressionPrime() {
         if (check(Kind.String)) return stringExpr();
         if (check(Kind.Text)) return textExpr();
@@ -95,16 +93,31 @@ public class Parser {
         if (check(Kind.OpenParenthesis)) return parenthesisExpr();
         if (check(Kind.Identifier)) return new Expression.IdentifierExpr(identifier());
         if (check(Kind.OpenSquareBracket)) return listExpr();
+        if (check(Kind.MatchKw)) return patternMatching();
         return null;
     }
 
+    private Expression patternMatching() {
+        consume(Kind.MatchKw, "We need the keyword 'match' to declare a pattern matching.");
+        Expression expression = expression();
+        consume(Kind.WithKw, "We need the keyword 'with' after an expression.");
+        List<Pattern> patterns = new ArrayList<>();
+        List<Expression> expressions = new ArrayList<>();
+        while (check(Kind.Pipe)) {
+            consume(Kind.Pipe, "");
+            patterns.add(pattern());
+            consume(Kind.Arrow, "We need the '->' to result an expression.");
+            expressions.add(expression());
+        }
+        return new Expression.PatternMatching(expression, patterns, expressions);
+    }
+
     private Expression textExpr() {
-        return new Expression.TextExpr(text());
+        return new Expression.ConstantExpr(text());
     }
 
     private Expression stringExpr() {
-        Token token = consume(Kind.String, "We need a string.");
-        return new Expression.StringExpr((String) token.value());
+        return new Expression.ConstantExpr(string());
     }
 
     private Expression listExpr() {
@@ -168,9 +181,68 @@ public class Parser {
         return new Params(identifiers);
     }
 
-    private Text text() {
-        Token text = consume(Kind.Text, "We need a bloc text.");
-        return new Text((String) text.value());
+    private Pattern pattern() {
+        Pattern primary = patternPrime();
+        Pattern pattern = consCellPattern(primary);
+        if (pattern == null) {
+            return primary;
+        }
+        return pattern;
+    }
+
+    private Pattern consCellPattern(Pattern head) {
+        if (check(Kind.DoubleColon)) {
+            consume(Kind.DoubleColon, "");
+            Pattern tail = pattern();
+            return new Pattern.PCons(head, tail);
+        }
+        return patternPrime();
+    }
+
+    private Pattern patternPrime() {
+        if (check(Kind.Identifier)) return identifierPattern();
+        if (check(Kind.OpenParenthesis)) return groupPattern();
+        Constant constant = constant();
+        if (constant == null) return null;
+        return new Pattern.PConstant(constant);
+    }
+
+    private Pattern groupPattern() {
+        consume(Kind.OpenParenthesis, "We need a '(' to open a group pattern.");
+        Pattern pattern = pattern();
+        consume(Kind.CloseParenthesis, "We need a ')' to close the group pattern.");
+        return pattern;
+    }
+
+    private Pattern identifierPattern() {
+        Identifier identifier = identifier();
+        if (identifier.name().equals("_")) {
+            return new Pattern.PAny();
+        }
+        return new Pattern.PIdentifier(identifier);
+    }
+
+    private Constant constant() {
+        if (check(Kind.OpenSquareBracket)) return emptyListConstant();
+        if (check(Kind.Text)) return text();
+        if (check(Kind.String)) return string();
+        return null;
+    }
+
+    private Constant emptyListConstant() {
+        consume(Kind.OpenSquareBracket, "We need a '[' symbol.");
+        consume(Kind.CloseSquareBracket,"We need a ']' symbol.");
+        return new Constant.CEmptyList();
+    }
+
+    private Constant text() {
+        Token token = consume(Kind.Text, "We need a bloc text.");
+        return new Constant.CText((String) token.value());
+    }
+
+    private Constant string() {
+        Token token = consume(Kind.String, "We need a string.");
+        return new Constant.CString((String) token.value());
     }
 
     private Identifier identifier() {

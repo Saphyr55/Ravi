@@ -22,7 +22,7 @@ import ravi.resolver.Interpreter;
 import ravi.resolver.ScopeResolver;
 import ravi.syntax.Lexer;
 import ravi.syntax.Parser;
-import ravi.syntax.model.Program;
+import ravi.syntax.ast.Program;
 import ravi.syntax.Token;
 
 import javax.swing.*;
@@ -49,7 +49,7 @@ public class App implements ActionListener {
 
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("ravi/Game.ravi"), StandardCharsets.UTF_8);
+        String source = Files.readString(Path.of("ravi/Test.ravi"), StandardCharsets.UTF_8);
 
         Lexer lexer = new Lexer(source, LinkedList::new);
         List<Token> tokens = lexer.scan();

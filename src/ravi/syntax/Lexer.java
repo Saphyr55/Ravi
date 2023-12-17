@@ -45,6 +45,7 @@ public class Lexer {
             case Symbol.CloseParenthesis -> addToken(Kind.CloseParenthesis);
             case Symbol.OpenSquareBracket -> addToken(Kind.OpenSquareBracket);
             case Symbol.CloseSquareBracket -> addToken(Kind.CloseSquareBracket);
+            case Symbol.Minus -> addToken(match(Symbol.Arrow) ? Kind.Arrow : Kind.Minus);
             case Symbol.Equal -> addToken(Kind.Equal);
             case Symbol.Comma -> addToken(Kind.Comma);
             case Symbol.Semicolon -> addToken(Kind.Semicolon);

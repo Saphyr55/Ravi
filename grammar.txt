@@ -14,16 +14,25 @@ Params -> Identifier Params
 
 Expr -> Expr Argument
       | Expr :: Expr
-      | Literal
       | List
+      | Constant
       | Identifier
       | let Identifier Params = Expr in Expr
       | ( Expr )
       | begin Expr end
+      | match Expr with Pattern
 
-Literal -> Number
+Pattern -> _
+        | Pattern :: Pattern
+        | Identifier
+        | ( Pattern )
+        | Constant
+
+Constant -> Number
         | Text
         | String
+        | [ ]
+        | ( )
 
 Argument -> Expr Argument
          | epsilon

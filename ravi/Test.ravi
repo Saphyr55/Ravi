@@ -36,4 +36,15 @@ let fRec x =
   fRec x
 end
 
-fRec "p";
+let isEmpty l =
+  match l with
+  | [] -> "true"
+  | h :: _ ->
+    begin
+      let _ = print h in
+      "false"
+    end
+end
+
+print (isEmpty []);
+print (isEmpty ["8"]);

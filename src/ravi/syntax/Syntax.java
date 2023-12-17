@@ -73,9 +73,12 @@ public final class Syntax {
         @Bind(kind = Kind.WhileKw)
         public static final String While = "while";
 
+        @Bind(kind = Kind.WhenKw)
+        public static final String When = "when";
     }
 
     public final static class Symbol {
+        public static final String Minus = "-";
         public static final String Space = " ";
         public static final String Equal = "=";
         public static final String CloseSquareBracket = "]";
@@ -90,6 +93,7 @@ public final class Syntax {
         public static final String CloseParenthesis = ")";
         public static final String Colon = ":";
         public static final String Pipe = "|";
+        public static final String Arrow = ">";
     }
 
 

@@ -1,6 +1,6 @@
 package ravi.resolver;
 
-import ravi.syntax.model.*;
+import ravi.syntax.ast.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -79,12 +79,6 @@ public class ScopeResolver {
             resolve(application.tail());
             return;
         }
-
-        if (expression instanceof Expression.IdentifierExpr) return;
-        if (expression instanceof Expression.UnitExpr) return;
-        if (expression instanceof Expression.StringExpr) return;
-        if (expression instanceof Expression.NumberExpr) return;
-        if (expression instanceof Expression.TextExpr) return;
 
     }
 
