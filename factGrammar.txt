@@ -64,14 +64,16 @@ ValueName -> LowercaseIdentifier
 
 ModuleName -> CapitalizedIdentifier
 
-CapitalizedIdentifier ->
-    [A-Z] Identifier
-  | [A-Z] [_A-Za-z0-9] Identifier
-  | epsilon
+CapitalizedIdentifier -> [A-Z] CapitalizedIdentifier'
 
-LowercaseIdentifier ->
-    [_a-z] Identifier
-  | [_a-z] [_A-Za-z0-9] Identifier
-  | epsilon
+CapitalizedIdentifier' -> Identifier
+                        | [_A-Za-z0-9] Identifier
+                        | epsilon
+
+LowercaseIdentifier -> [_a-z] LowercaseIdentifier'
+
+LowercaseIdentifier' -> Identifier
+                    | [_A-Za-z0-9] Identifier
+                    | epsilon
 
 
