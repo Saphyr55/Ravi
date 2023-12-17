@@ -26,6 +26,7 @@ public class Parser {
 
     private Statement statement() {
         if (check(Kind.LetKw)) return let();
+        if (check(Kind.ModuleKw)) return moduleStmt();
         return instructionExpr();
     }
 
@@ -39,18 +40,39 @@ public class Parser {
         return new Statement.Instr(expressions);
     }
 
-    private Statement let() {
+    private Statement.Let let() {
 
         consume(Kind.LetKw, "We need the 'let' keyword.");
-        Identifier identifier = identifier();
-        Params params = params();
+        Identifier.Lowercase valueName = lowercase();
+        Parameters parameters = parameters();
 
         consume(Kind.Equal, "We need the '=' symbol.");
 
         Expression result = expression();
         consume(Kind.EndKw, "We need the 'end' keyword to close a let declarations.");
 
-        return new Statement.Let(identifier, params, result);
+        return new Statement.Let(valueName, parameters, result);
+    }
+
+    private Statement moduleStmt() {
+
+        consume(Kind.ModuleKw, "We need the 'module' keyword.");
+        Identifier.Capitalized moduleName = capitalized();
+
+        consume(Kind.Equal, "We need the '=' symbol.");
+
+        ModuleContent content = moduleContent();
+        consume(Kind.EndKw, "We need the 'end' keyword to close a let the module");
+
+        return new Statement.Module(moduleName, content);
+    }
+
+    private ModuleContent moduleContent() {
+        if (check(Kind.LetKw)) {
+            Statement.Let let = let();
+            return new ModuleContent(let, moduleContent());
+        }
+        return null;
     }
 
     private Expression expression() {
@@ -89,19 +111,33 @@ public class Parser {
         if (check(Kind.LetKw)) return letIn();
         if (check(Kind.BeginKw)) return groupExpr();
         if (check(Kind.OpenParenthesis)) return parenthesisExpr();
-        if (check(Kind.Identifier)) return new Expression.IdentifierExpr(identifier());
+        if (check(Kind.LowercaseIdentifier)) return valueNameExpr();
         if (check(Kind.OpenSquareBracket)) return listExpr();
         if (check(Kind.MatchKw)) return patternMatching();
         if (check(Kind.FunKw)) return lambdaExpr();
+        if (check(Kind.CapitalizedIdentifier)) return moduleCallExpr();
         return null;
+    }
+
+    private Expression moduleCallExpr() {
+        Token moduleNameToken = consume(Kind.CapitalizedIdentifier, "We need the name of the module.");
+        consume(Kind.Dot, "We need the '.' symbol to call a declaration from the module.");
+        Token valueName = consume(Kind.LowercaseIdentifier, "We need the name of a declaration from the module.");
+        return new Expression.ModuleCallExpr(
+                new Identifier.Capitalized((String) moduleNameToken.value()),
+                new Identifier.Lowercase((String) valueName.value()));
+    }
+
+    private Expression valueNameExpr() {
+        return new Expression.ValueNameExpr(lowercase());
     }
 
     private Expression lambdaExpr() {
         consume(Kind.FunKw, "We need the 'fun' keyword to declare a lambda");
-        Params params = params();
+        Parameters parameters = parameters();
         consume(Kind.Arrow, "We need the '->' symbol to specifies an expression for the lambda.");
         Expression expression = expression();
-        return new Expression.Lambda(params, expression);
+        return new Expression.Lambda(parameters, expression);
     }
 
     private Expression patternMatching() {
@@ -166,8 +202,8 @@ public class Parser {
     private Expression letIn() {
 
         consume(Kind.LetKw, "We need the 'let' keyword.");
-        Identifier identifier = identifier();
-        Params params = params();
+        Identifier.Lowercase valueName = lowercase();
+        Parameters parameters = parameters();
 
         consume(Kind.Equal, "We need the '=' symbol.");
 
@@ -175,17 +211,17 @@ public class Parser {
         consume(Kind.InKw, "We need the 'in' keyword to close a let declarations.");
         Expression resultIn = expression();
 
-        return new Expression.LetIn(identifier, params, resultLet, resultIn);
+        return new Expression.LetIn(valueName, parameters, resultLet, resultIn);
     }
 
-    private Params params() {
-        List<Identifier> identifiers = new LinkedList<>();
-        while (check(Kind.Identifier)) {
-            Token token = consume(Kind.Identifier, "We need an identifier.");
-            Identifier identifier = new Identifier((String) token.value());
+    private Parameters parameters() {
+        List<Identifier.Lowercase> identifiers = new LinkedList<>();
+        while (check(Kind.LowercaseIdentifier)) {
+            Token token = consume(Kind.LowercaseIdentifier, "We need an valueName.");
+            Identifier.Lowercase identifier = new Identifier.Lowercase((String) token.value());
             identifiers.add(identifier);
         }
-        return new Params(identifiers);
+        return new Parameters(identifiers);
     }
 
     private Pattern pattern() {
@@ -207,7 +243,7 @@ public class Parser {
     }
 
     private Pattern patternPrime() {
-        if (check(Kind.Identifier)) return identifierPattern();
+        if (check(Kind.LowercaseIdentifier)) return valueNamePattern();
         if (check(Kind.OpenParenthesis)) return groupPattern();
         Constant constant = constant();
         if (constant == null) return null;
@@ -221,12 +257,12 @@ public class Parser {
         return pattern;
     }
 
-    private Pattern identifierPattern() {
-        Identifier identifier = identifier();
+    private Pattern valueNamePattern() {
+        Identifier.Lowercase identifier = lowercase();
         if (identifier.name().equals("_")) {
             return new Pattern.PAny();
         }
-        return new Pattern.PIdentifier(identifier);
+        return new Pattern.PValueName(identifier);
     }
 
     private Constant constant() {
@@ -252,9 +288,14 @@ public class Parser {
         return new Constant.CString((String) token.value());
     }
 
-    private Identifier identifier() {
-        Token identifier = consume(Kind.Identifier, "We need an identifier.");
-        return new Identifier((String) identifier.value());
+    private Identifier.Capitalized capitalized() {
+        Token identifier = consume(Kind.CapitalizedIdentifier, "We need to have a moduleName capitalized.");
+        return new Identifier.Capitalized((String) identifier.value());
+    }
+
+    private Identifier.Lowercase lowercase() {
+        Token identifier = consume(Kind.LowercaseIdentifier, "We need to have a moduleName NOT capitalized.");
+        return new Identifier.Lowercase((String) identifier.value());
     }
 
     private Token consume(Kind kind, String message) {

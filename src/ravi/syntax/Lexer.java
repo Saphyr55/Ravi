@@ -38,7 +38,6 @@ public class Lexer {
     private void nextToken() {
         final String s = String.valueOf(advance());
         switch (s) {
-            case Symbol.DoubleQuote -> addStringToken();
             case Symbol.Pipe -> addToken(Kind.Pipe);
             case Symbol.Colon -> addToken(match(Symbol.Colon) ? Kind.DoubleColon : Kind.Colon);
             case Symbol.OpenParenthesis -> addToken(Kind.OpenParenthesis);
@@ -49,6 +48,8 @@ public class Lexer {
             case Symbol.Equal -> addToken(Kind.Equal);
             case Symbol.Comma -> addToken(Kind.Comma);
             case Symbol.Semicolon -> addToken(Kind.Semicolon);
+            case Symbol.Dot -> addToken(Kind.Dot);
+            case Symbol.DoubleQuote -> addStringToken();
             case Symbol.BackslashN -> { line++; col = 0; }
             case Symbol.Space, Symbol.BackslashR, Symbol.BackslashT -> { }
             default -> addDefaultToken(s);
@@ -57,19 +58,27 @@ public class Lexer {
 
     private void addDefaultToken(String c) {
         if (Core.isAlpha(c.charAt(0))) {
-            addIdentifierToken();
+            addIdentifierToken(c.charAt(0));
             return;
         }
         report("Unexpected character.");
     }
 
-    private void addIdentifierToken() {
+    private void addIdentifierToken(char c) {
+        if (Character.isUpperCase(c)) {
+            addIdentifierToken(Kind.CapitalizedIdentifier);
+            return;
+        }
+        addIdentifierToken(Kind.LowercaseIdentifier);
+    }
+
+    private void addIdentifierToken(Kind kind) {
         while (Core.isAlphaNumeric(peek())) {
             next();
         }
         String text = source.substring(start, position);
         Kind type = BindingManager.KEYWORDS.get(text);
-        addToken(type == null ? Kind.Identifier : type, type == null ? text : null);
+        addToken(type == null ? kind : type, type == null ? text : null);
     }
 
     private void addStringToken() {

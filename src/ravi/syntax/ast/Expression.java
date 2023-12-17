@@ -1,6 +1,5 @@
 package ravi.syntax.ast;
 
-import java.util.HashMap;
 import java.util.List;
 
 public sealed interface Expression {
@@ -11,7 +10,7 @@ public sealed interface Expression {
 
     record Instr(Expression primary, Expression result) implements Expression {}
 
-    record LetIn(Identifier name, Params params, Expression expr, Expression result) implements Expression { }
+    record LetIn(Identifier.Lowercase valueName, Parameters parameters, Expression expr, Expression result) implements Expression { }
 
     record GroupExpr(Expression expr) implements Expression { }
 
@@ -21,7 +20,7 @@ public sealed interface Expression {
 
     record ConstantExpr(Constant constant) implements Expression { }
 
-    record IdentifierExpr(Identifier identifier) implements Expression { }
+    record ValueNameExpr(Identifier.Lowercase valueName) implements Expression { }
 
     record ConsCell(Expression head, Expression tail) implements Expression { }
 
@@ -30,6 +29,8 @@ public sealed interface Expression {
                            List<Expression> expressions)
             implements Expression { }
 
-    record Lambda(Params params, Expression expression) implements Expression { }
+    record Lambda(Parameters parameters, Expression expression) implements Expression { }
+
+    record ModuleCallExpr(Identifier.Capitalized moduleName, Identifier.Lowercase valueName) implements Expression { }
 
 }

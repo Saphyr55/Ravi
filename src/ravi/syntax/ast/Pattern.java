@@ -10,7 +10,7 @@ public sealed interface Pattern {
 
     record PGroup(Pattern inner) implements Pattern { }
 
-    record PIdentifier(Identifier identifier) implements Pattern { }
+    record PValueName(Identifier.Lowercase identifier) implements Pattern { }
 
 
 }

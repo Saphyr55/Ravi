@@ -1,5 +1,32 @@
 
-let testList =
+module M =
+
+  let myFuncInM _ =
+    print "Hello World!"
+  end
+
+end
+
+module List =
+
+  let empty = []
+  end
+
+  let isEmpty l =
+    match l with
+    | [] -> "true"
+    | _ -> "false"
+  end
+
+  let map f l =
+    match l with
+    | [] -> []
+    | h :: t -> (f h) :: map f t
+  end
+
+end
+
+let l =
   [ "a"
   ; begin
       ("0")
@@ -8,18 +35,8 @@ let testList =
   ]
 end
 
-let testUniqueList = [ "7" ]
-end
-
-let testEmptyList = [ ]
-end
-
-print testList;
-print testUniqueList;
-print testEmptyList;
-
 let concatListAndPrint _ = print
-  (concat testList [ "2"; () ])
+  (concat l [ "2"; () ])
 end
 
 let f msg phi =
@@ -31,33 +48,10 @@ end
 concatListAndPrint ();
 f "Hello, %s and %s!" print;
 
-let fRec x =
-  let _ = print x in
-  fRec x
+print (List.isEmpty []);
+print (List.isEmpty ("8" :: "8" :: List.empty));
+
+let mapTestList f = List.map f l
 end
 
-let isEmpty l =
-  match l with
-  | [] -> "true"
-  | h :: _ ->
-    begin
-      let _ = print h in
-      "false"
-    end
-end
-
-print (isEmpty []);
-print (isEmpty ("8" :: "8" :: []));
-
-let map f l =
-  match l with
-  | [] -> []
-  | h :: t -> (f h) :: map f t
-end
-
-let mapTestList f = map f testList
-end
-
-print (mapTestList (fun e -> format "Element: %s" [e]));
-
-
+print (mapTestList ( fun e -> format "Element: %s" [e] ) );

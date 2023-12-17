@@ -7,29 +7,35 @@ Statement -> Let
 
 Instr -> Expr ;
 
-Let -> let Identifier Params = Expr end
+Module -> module ModuleName = ModuleContent end
+ModuleContent -> ModuleContent'
+ModuleContent' -> Let ModuleContent
+                | epsilon
 
-Params -> Identifier Params
+Let -> let ValueName Parameters = Expr end
+
+Parameters -> ValueName Parameters
        | epsilon
 
 Expr -> Expr Argument
       | Expr :: Expr
       | List
       | Constant
-      | Identifier
-      | let Identifier Params = Expr in Expr
+      | ValueName
+      | let ValueName Parameters = Expr in Expr
       | fun Param -> Expr
+      | ModuleName . ValueName
       | ( Expr )
       | begin Expr end
       | match Expr with Pattern
 
 Pattern -> _
         | Pattern :: Pattern
-        | Identifier
+        | ValueName
         | ( Pattern )
         | Constant
 
-Constant -> Number
+Constant -> Number // Not implemented yet
         | Text
         | String
         | [ ]
@@ -47,10 +53,20 @@ RestList' -> RestList
 
 Text -> text
 
-Number -> [0-9] Number
-        | epsilon
+Number -> [0-9]* // Not implemented yet
 
-Identifier -> [_A-Za-z] Identifier
-           | [_A-Za-z] [_A-Za-z0-9] Identifier
-           | epsilon
+ValueName -> LowercaseIdentifier
+
+ModuleName -> CapitalizedIdentifier
+
+CapitalizedIdentifier ->
+    [A-Z] Identifier
+  | [A-Z] [_A-Za-z0-9] Identifier
+  | epsilon
+
+LowercaseIdentifier ->
+    [_a-z] Identifier
+  | [_a-z] [_A-Za-z0-9] Identifier
+  | epsilon
+
 

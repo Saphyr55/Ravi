@@ -24,17 +24,33 @@ public class Interpreter {
     }
 
     void interpretInstruction(Statement statement) {
+
         if (statement instanceof Statement.Let let) {
-            defineFunction(environment, let.name(), let.params(), let.result());
-            return;
+            defineFunction(environment, let.name(), let.parameters(), let.result());
         }
-        if (statement instanceof Statement.Instr instr) {
+
+        else if (statement instanceof Statement.Module module) {
+            String moduleName = module.moduleName().name();
+            Environment moduleEnv = new Environment(environment);
+            environment.define(moduleName, Value.module(moduleName, moduleEnv));
+            interpretModuleContent(moduleEnv, module.moduleContent());
+        }
+
+        else if (statement instanceof Statement.Instr instr) {
             instr.expression().forEach(this::evaluate);
-            return;
         }
+
+        
     }
 
-    void evaluateList(RaviRestList rest,List<Value> values) {
+    void interpretModuleContent(Environment environment, ModuleContent content) {
+        if (content == null) return;
+        Statement.Let let = content.let();
+        defineFunction(environment, let.name(), let.parameters(), let.result());
+        interpretModuleContent(environment, content.restContent());
+    }
+
+    void evaluateList(RaviRestList rest, List<Value> values) {
         if(rest == null)
             return;
         values.add(evaluate(rest.expression()));
@@ -42,6 +58,14 @@ public class Interpreter {
     }
 
     Value evaluate(Expression expression) {
+
+        if (expression instanceof Expression.ModuleCallExpr expr) {
+            Value value = environment.value(expr.moduleName().name());
+            if (value instanceof Value.VModule module) {
+                return module.environment().get(expr.valueName().name());
+            }
+            throw new InterpretException("");
+        }
 
         if (expression instanceof Expression.ConsCell consCell) {
             Value head = evaluate(consCell.head());
@@ -59,14 +83,15 @@ public class Interpreter {
                     return evaluate(pm.expressions().get(i));
                 }
             }
-            return Value.unit();
+            throw new InterpretException("Missing '_' pattern for '%s' moduleName."
+                            .formatted(value.toStr()));
         }
 
         if (expression instanceof Expression.Lambda lambda) {
-            return new Value.VApplication(new Func(lambda.params()
+            return new Value.VApplication(new Func(lambda.parameters()
                     .declarations()
                     .stream()
-                    .map(Identifier::name)
+                    .map(Identifier.Lowercase::name)
                     .toList(), lambda.expression(), environment));
         }
 
@@ -97,8 +122,8 @@ public class Interpreter {
             return evaluate(expr.expr());
         }
 
-        if (expression instanceof Expression.IdentifierExpr expr) {
-            return lookUpDeclaration(expr.identifier().name());
+        if (expression instanceof Expression.ValueNameExpr expr) {
+            return lookUpDeclaration(expr.valueName().name());
         }
 
         if (expression instanceof Expression.Instr) {
@@ -106,7 +131,7 @@ public class Interpreter {
         }
 
         if (expression instanceof Expression.LetIn expr)  {
-            defineFunction(environment, expr.name(), expr.params(), expr.expr());
+            defineFunction(environment, expr.valueName(), expr.parameters(), expr.expr());
             return evaluate(expr.result(), environment);
         }
 
@@ -138,11 +163,9 @@ public class Interpreter {
 
     private boolean patternMatch(Pattern pattern, Value value) {
 
-        if (pattern instanceof Pattern.PAny) {
-            return true;
-        }
+        if (pattern instanceof Pattern.PAny) return true;
 
-        if (pattern instanceof Pattern.PIdentifier identifier) {
+        if (pattern instanceof Pattern.PValueName identifier) {
             environment.define(identifier.identifier().name(), value);
             return true;
         }
@@ -162,7 +185,7 @@ public class Interpreter {
             return patternMatch(pGroup.inner(), value);
         }
 
-        return false;
+        throw new IllegalStateException("Missing pattern implementation.");
     }
 
     private Value evaluate(Constant constant) {
@@ -206,18 +229,18 @@ public class Interpreter {
         return value;
     }
 
-    void defineFunction(Environment env, Identifier name, Params params, Expression result) {
+    void defineFunction(Environment env, Identifier.Lowercase name, Parameters parameters, Expression result) {
 
-        if (params.declarations().isEmpty()) {
+        if (parameters.declarations().isEmpty()) {
             env.define(name.name(), evaluate(result, env));
             return;
         }
 
         env.define(name.name(),
-                new Value.VApplication(new Func(params
+                new Value.VApplication(new Func(parameters
                     .declarations()
                     .stream()
-                    .map(Identifier::name)
+                    .map(Identifier.Lowercase::name)
                     .toList(), result, env)));
     }
 

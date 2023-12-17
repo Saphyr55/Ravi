@@ -27,7 +27,7 @@ public class ScopeResolver {
         if (statement instanceof Statement.Let let) {
             declare(let.name().name());
             define(let.name().name());
-            resolveLet(let.params(), let.result());
+            resolveLet(let.parameters(), let.result());
             return;
         }
         if (statement instanceof Statement.Instr instr) {
@@ -62,9 +62,9 @@ public class ScopeResolver {
         }
 
         if (expression instanceof Expression.LetIn expr) {
-            declare(expr.name().name());
-            resolveLet(expr.params(), expr.expr());
-            define(expr.name().name());
+            declare(expr.valueName().name());
+            resolveLet(expr.parameters(), expr.expr());
+            define(expr.valueName().name());
             resolve(expr.result());
             return;
         }
@@ -117,9 +117,9 @@ public class ScopeResolver {
         scopes.peek().put(name, true);
     }
 
-    private void resolveLet(Params params, Expression result) {
+    private void resolveLet(Parameters parameters, Expression result) {
         beginScope();
-        for (var param : params.declarations()) {
+        for (var param : parameters.declarations()) {
             declare(param.name());
             define(param.name());
         }

@@ -1,5 +1,7 @@
 package ravi.model;
 
+import ravi.resolver.Environment;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,6 +19,7 @@ public sealed interface Value {
 
     record VList(List<Value> values) implements Value { }
 
+    record VModule(String name, Environment environment) implements Value { }
 
     static VUnit unit() { return new VUnit(); }
 
@@ -29,6 +32,8 @@ public sealed interface Value {
     static VString string(String content) { return new VString(content); }
 
     static VList list(List<Value> values) { return new VList(values); }
+
+    static VModule module(String name, Environment environment) { return new VModule(name, environment); }
 
 
     default String toStr() {

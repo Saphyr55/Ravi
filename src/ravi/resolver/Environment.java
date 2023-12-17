@@ -22,6 +22,15 @@ public class Environment {
         declarations.put(name, value);
     }
 
+    public Value get(String valueName) {
+
+        if (declarations.containsKey(valueName)) {
+            return declarations.get(valueName);
+        }
+
+        throw new InterpretException("Undefined variable '" + valueName + "' on get moduleName.");
+    }
+
     public Value value(String name) {
 
         if (declarations.containsKey(name)) {
@@ -30,7 +39,7 @@ public class Environment {
 
         if (enclosing != null) return enclosing.value(name);
 
-        throw new InterpretException("Undefined variable '" + name + "' on get value.");
+        throw new InterpretException("Undefined variable '" + name + "' on get moduleName.");
     }
 
     public Value search(String name) {
@@ -42,7 +51,7 @@ public class Environment {
             }
             environment = environment.enclosing;
         }
-        throw new InterpretException("Undefined variable '" + name + "' on get value.");
+        throw new InterpretException("Undefined variable '" + name + "' on get moduleName.");
     }
 
 }

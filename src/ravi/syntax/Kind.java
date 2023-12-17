@@ -10,7 +10,8 @@ public enum Kind {
     // Literal
     String,
     Text,
-    Identifier,
+    CapitalizedIdentifier,
+    LowercaseIdentifier,
     Number,
 
     // Symbol
@@ -26,6 +27,7 @@ public enum Kind {
     Pipe,
     Arrow,
     Minus,
+    Dot,
 
     // Keywords
     OpenKw,
@@ -51,5 +53,7 @@ public enum Kind {
     EndKw,
     InKw,
     WhenKw,
+    ModuleKw,
+
 
 }

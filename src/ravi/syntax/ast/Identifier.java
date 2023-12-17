@@ -1,5 +1,9 @@
 package ravi.syntax.ast;
 
-public record Identifier(String name) {
+public interface Identifier {
+
+    record Capitalized(String name) { }
+
+    record Lowercase(String name) { }
 
 }

@@ -13,12 +13,6 @@ public final class Syntax {
         @Bind(kind = Kind.MatchKw)
         public static final String Match = "match";
 
-        @Bind(kind = Kind.NativeKw)
-        public static final String Native = "native";
-
-        @Bind(kind = Kind.IncludeKw)
-        public static final String Include = "include";
-
         @Bind(kind = Kind.TypeKw)
         public static final String Type = "type";
 
@@ -73,11 +67,15 @@ public final class Syntax {
         @Bind(kind = Kind.WhileKw)
         public static final String While = "while";
 
+        @Bind(kind = Kind.ModuleKw)
+        public static final String Module = "module";
+
         @Bind(kind = Kind.WhenKw)
         public static final String When = "when";
     }
 
     public final static class Symbol {
+        public static final String Dot = ".";
         public static final String Minus = "-";
         public static final String Space = " ";
         public static final String Equal = "=";
