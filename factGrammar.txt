@@ -24,7 +24,7 @@ Expr -> Expr Expr'
       | Constant
       | ValueName
       | let ValueName Parameters = Expr in Expr
-      | fun Param -> Expr
+      | fun Parameters -> Expr
       | ModuleName . ValueName
       | ( Expr )
       | begin Expr end
@@ -49,14 +49,12 @@ Argument' -> Argument
         | epsilon
 
 List -> [ List'
-List' -> Expr Restlist ]
+List' -> Expr RestList ]
         | ]
 
 RestList -> ; Expr RestList'
 RestList' -> RestList
           | epsilon
-
-Text -> text
 
 Number -> [0-9]* // Not implemented yet
 
