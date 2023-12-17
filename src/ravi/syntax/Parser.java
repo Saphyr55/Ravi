@@ -17,7 +17,7 @@ public class Parser {
     /**
      * Program -> Statement Program | epsilon
      *
-     * @return
+     * @return program
      */
     public Program program() {
         Statement statement = statement();
@@ -32,12 +32,11 @@ public class Parser {
 
     private Statement instructionExpr() {
         List<Expression> expressions = new LinkedList<>();
-        Expression expression = expression();
-        while (check(Kind.Semicolon)) {
-            expressions.add(expression);
-            expression = expression();
+        expressions.add(expression());
+        do {
+            expressions.add(expression());
             consume(Kind.Semicolon, "We need a ';' symbole to close the instruction.");
-        }
+        } while (check(Kind.Semicolon));
         return new Statement.Instr(expressions);
     }
 
@@ -62,7 +61,7 @@ public class Parser {
     private Expression application() {
 
         Expression primary = expressionPrime();
-        Expression expression = expressionPrime();
+        Expression expression = consCell(primary);
 
         if (expression == null) {
             return primary;
@@ -77,6 +76,16 @@ public class Parser {
 
         return new Expression.Application(primary, expressions);
     }
+
+    private Expression consCell(Expression head) {
+        if (check(Kind.DoubleColon)) {
+            consume(Kind.DoubleColon, "");
+            Expression tail = expression();
+            return new Expression.ConsCell(head, tail);
+        }
+        return expressionPrime();
+    }
+
 
     private Expression expressionPrime() {
         if (check(Kind.String)) return stringExpr();
@@ -152,7 +161,7 @@ public class Parser {
     private Params params() {
         List<Identifier> identifiers = new LinkedList<>();
         while (check(Kind.Identifier)) {
-            Token token = consume(Kind.Identifier, "We need an name.");
+            Token token = consume(Kind.Identifier, "We need an identifier.");
             Identifier identifier = new Identifier((String) token.value());
             identifiers.add(identifier);
         }
@@ -165,7 +174,7 @@ public class Parser {
     }
 
     private Identifier identifier() {
-        Token identifier = consume(Kind.Identifier, "We need an name.");
+        Token identifier = consume(Kind.Identifier, "We need an identifier.");
         return new Identifier((String) identifier.value());
     }
 

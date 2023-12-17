@@ -8,7 +8,6 @@ import java.util.Stack;
 
 public class ScopeResolver {
 
-    private FunctionType currentFunction = FunctionType.None;
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
 
@@ -26,9 +25,9 @@ public class ScopeResolver {
 
     private void resolve(Statement statement) {
         if (statement instanceof Statement.Let let) {
-            declare(let.name().identifier());
-            define(let.name().identifier());
-            resolveFunction(let.params(), let.result(), FunctionType.Let);
+            declare(let.name().name());
+            define(let.name().name());
+            resolveLet(let.params(), let.result());
             return;
         }
         if (statement instanceof Statement.Instr instr) {
@@ -38,18 +37,10 @@ public class ScopeResolver {
 
     private void resolve(Expression expression) {
 
-        if (expression instanceof Expression.IdentifierExpr expr) {
-            var name = expr.identifier().identifier();
-            if (!scopes.isEmpty() && scopes.peek().get(name) == Boolean.FALSE) {
-                throw new ResolverException(name,
-                        "Can't read local variable '%s' in its own initializer.".formatted(name));
-            }
-            resolveLocal(expression, name);
-            return;
-        }
-
         if (expression instanceof Expression.GroupExpr expr) {
+            beginScope();
             resolve(expr.expr());
+            endScope();
             return;
         }
 
@@ -65,36 +56,42 @@ public class ScopeResolver {
             return;
         }
 
-        if (expression instanceof Expression.TextExpr expr) {
-            return;
-        }
-
         if (expression instanceof Expression.ParenthesisExpr expr) {
             resolve(expr.expr());
             return;
         }
 
-        if (expression instanceof Expression.NumberExpr expr) {
-
-        }
-
         if (expression instanceof Expression.LetIn expr) {
-            declare(expr.name().identifier());
-            define(expr.name().identifier());
-            resolveFunction(expr.params(), expr.expr(), FunctionType.Let);
+            declare(expr.name().name());
+            resolveLet(expr.params(), expr.expr());
+            define(expr.name().name());
             resolve(expr.result());
+            return;
         }
 
         if (expression instanceof Expression.ListExpr expr) {
             resolveList(expr.list());
+            return;
         }
+
+        if (expression instanceof Expression.ConsCell application) {
+            resolve(application.head());
+            resolve(application.tail());
+            return;
+        }
+
+        if (expression instanceof Expression.IdentifierExpr) return;
+        if (expression instanceof Expression.UnitExpr) return;
+        if (expression instanceof Expression.StringExpr) return;
+        if (expression instanceof Expression.NumberExpr) return;
+        if (expression instanceof Expression.TextExpr) return;
 
     }
 
-    private void resolveList(RaviList rlist) {
-        if (rlist instanceof RaviList.List list) {
-            resolve(list.expression());
-            resolveList(list.rest());
+    private void resolveList(RaviList cons) {
+        if (cons instanceof RaviList.List list) {
+            resolve(list.head());
+            resolveList(list.tail());
         }
     }
 
@@ -115,13 +112,9 @@ public class ScopeResolver {
     }
 
     private void declare(String name) {
-
         if (scopes.isEmpty()) return;
-
         Map<String, Boolean> scope = scopes.peek();
-        if (scope.containsKey(name))
-            throw new ResolverException(name, "Already a variable with this name in this scope.");
-
+        if (scope.containsKey(name)) { return; }
         scope.put(name, false);
     }
 
@@ -130,26 +123,14 @@ public class ScopeResolver {
         scopes.peek().put(name, true);
     }
 
-    private void resolveLocal(Expression expression, String name) {
-        for (int i = scopes.size() - 1; i >= 0; i--) {
-            if (scopes.get(i).containsKey(name)) {
-                interpreter.resolve(expression, scopes.size() - 1 - i);
-                return;
-            }
-        }
-    }
-
-    private void resolveFunction(Params params, Expression result, FunctionType type) {
-        FunctionType enclosingFunction = currentFunction;
-        currentFunction = type;
+    private void resolveLet(Params params, Expression result) {
         beginScope();
         for (var param : params.declarations()) {
-            declare(param.identifier());
-            define(param.identifier());
+            declare(param.name());
+            define(param.name());
         }
         resolve(result);
         endScope();
-        currentFunction = enclosingFunction;
     }
 
 }

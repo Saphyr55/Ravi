@@ -8,9 +8,6 @@ let testList =
   ]
 end
 
-let map x f = f x
-end
-
 let testUniqueList = [ "7" ]
 end
 
@@ -22,9 +19,7 @@ print testUniqueList;
 print testEmptyList;
 
 let concatListAndPrint = print
-  begin
-    concat testList [ "2"; () ]
-  end
+  (concat testList [ "2"; () ])
 end
 
 concatListAndPrint;
@@ -36,3 +31,10 @@ let f msg phi =
 end
 
 f "Hello, %s and %s!" print;
+
+let g x =
+  let _ = print x in
+  g x
+end
+
+g "p";

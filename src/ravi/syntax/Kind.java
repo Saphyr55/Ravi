@@ -1,33 +1,51 @@
 package ravi.syntax;
 
 public enum Kind {
+
+
     EOF,
     Unknown,
-    InKw,
-    String,
-    ThreeDoubleQuote,
     NewLine,
-    Quote,
+
+    // Literal
+    String,
     Text,
     Identifier,
-    IfKw,
-    ThenKw,
-    ElseKw,
-    LetKw,
-    BeginKw,
-    EndKw,
+    Number,
+
+    // Symbol
     OpenSquareBracket,
     CloseSquareBracket,
     Comma,
+    Equal,
+    Semicolon,
+    Colon,
+    DoubleColon,
+    OpenParenthesis,
+    CloseParenthesis,
+    Pipe,
+
+    // Keywords
     OpenKw,
     IncludeKw,
     NativeKw,
     MatchKw,
     WithKw,
     ValKw,
-    Equal,
-    Semicolon,
-    OpenParenthesis,
-    CloseParenthesis,
-    Number,
+    TypeKw,
+    FunKw,
+    TryKw,
+    RecKw,
+    AndKw,
+    DoKw,
+    DoneKw,
+    ForKw,
+    WhileKw,
+    IfKw,
+    ThenKw,
+    ElseKw,
+    LetKw,
+    BeginKw,
+    EndKw,
+    InKw,
 }

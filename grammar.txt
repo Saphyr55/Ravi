@@ -13,10 +13,11 @@ Params -> Identifier Params
        | epsilon
 
 Expr -> Expr Argument
+      | Expr :: Expr
       | Literal
       | List
       | Identifier
-      | let Identifier Params = Expr in Expr //not implemented yet
+      | let Identifier Params = Expr in Expr
       | ( Expr )
       | begin Expr end
 

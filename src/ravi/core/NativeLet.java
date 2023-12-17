@@ -53,13 +53,15 @@ public final class NativeLet {
         environment.define(genNameNativeLet(method, let), value);
     }
 
-    private static Value call(Method method, Interpreter inter, List<?> args) {
+    private static Value call(Method method, Interpreter inter, List<Value> args) {
         try {
             var mt = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
             var mh = LOOKUP.findStatic(NativeLet.class, method.getName(), mt);
             mh = mh.bindTo(inter);
             return (Value) mh.invokeWithArguments(args);
         } catch (Throwable e) {
+            String argsName = Arrays.toString(args.stream().map(Value::toStr).toArray());
+            System.err.printf("You try to apply the function '%s' with %s\n", method.getName(), argsName);
             throw new RuntimeException(e);
         }
     }

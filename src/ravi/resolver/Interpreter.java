@@ -4,6 +4,7 @@ import ravi.model.Func;
 import ravi.model.Value;
 import ravi.syntax.model.*;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,14 +12,10 @@ import java.util.Map;
 
 public class Interpreter {
 
-    private final Map<Expression, Integer> locals;
-    private final Environment globals;
     private Environment environment;
 
     public Interpreter(Environment context) {
-        this.locals = new HashMap<>();
         this.environment = context;
-        this.globals = environment;
     }
 
     public void interpretProgram(Program program) {
@@ -27,7 +24,6 @@ public class Interpreter {
             interpretProgram(program.program());
         }
     }
-
 
     void interpretInstruction(Statement statement) {
         if (statement instanceof Statement.Let let) {
@@ -58,8 +54,8 @@ public class Interpreter {
             if (expr.list() instanceof RaviList.EmptyList){
                 return new Value.VList(new ArrayList<>());
             } else if (expr.list() instanceof RaviList.List list) {
-                values.add(evaluate(list.expression()));
-                evaluateList(list.rest(),values);
+                values.add(evaluate(list.head()));
+                evaluateList(list.tail(),values);
             }
             return new Value.VList(values);
         }
@@ -81,17 +77,16 @@ public class Interpreter {
         }
 
         if (expression instanceof Expression.IdentifierExpr expr) {
-            return lookUpVariable(expr.identifier().identifier(), expr);
+            return lookUpDeclaration(expr.identifier().name());
         }
 
-        if (expression instanceof Expression.Instr expr) {
-            evaluate(expr.primary());
-            return evaluate(expr.result());
+        if (expression instanceof Expression.Instr) {
+            throw new InterpretException("Not implemented yet.");
         }
 
         if (expression instanceof Expression.LetIn expr)  {
             defineFunction(environment, expr.name(), expr.params(), expr.expr());
-            return evaluate(expr.result());
+            return evaluate(expr.result(), environment);
         }
 
         if (expression instanceof Expression.Application application) {
@@ -120,39 +115,34 @@ public class Interpreter {
         return null;
     }
 
-    public void resolve(Expression expr, int depth) {
-        locals.put(expr, depth);
-    }
-
-    private Value lookUpVariable(String name, Expression expression) {
-        Integer distance = locals.get(expression);
-        if (distance != null) {
-            return environment.at(distance, name);
-        } else {
-            return globals.value(name);
-        }
+    private Value lookUpDeclaration(String name) {
+        return environment.search(name);
     }
 
     public Value evaluate(Expression expression, Environment environment) {
         Environment previous = this.environment;
+        Value value;
         try {
             this.environment = environment;
-            return evaluate(expression);
+            value = evaluate(expression);
         } finally {
             this.environment = previous;
         }
+        return value;
     }
 
     void defineFunction(Environment env, Identifier name, Params params, Expression result) {
+
         if (params.declarations().isEmpty()) {
-            env.define(name.identifier(), evaluate(result));
+            env.define(name.name(), evaluate(result, env));
             return;
         }
-        env.define(name.identifier(),
+
+        env.define(name.name(),
                 new Value.VApplication(new Func(params
                     .declarations()
                     .stream()
-                    .map(Identifier::identifier)
+                    .map(Identifier::name)
                     .toList(), result, env)));
     }
 

@@ -26,4 +26,5 @@ public sealed interface Expression {
 
     record IdentifierExpr(Identifier identifier) implements Expression { }
 
+    record ConsCell(Expression head, Expression tail) implements Expression { }
 }

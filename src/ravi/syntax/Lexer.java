@@ -39,6 +39,8 @@ public class Lexer {
         final String s = String.valueOf(advance());
         switch (s) {
             case Symbol.DoubleQuote -> addStringToken();
+            case Symbol.Pipe -> addToken(Kind.Pipe);
+            case Symbol.Colon -> addToken(match(Symbol.Colon) ? Kind.DoubleColon : Kind.Colon);
             case Symbol.OpenParenthesis -> addToken(Kind.OpenParenthesis);
             case Symbol.CloseParenthesis -> addToken(Kind.CloseParenthesis);
             case Symbol.OpenSquareBracket -> addToken(Kind.OpenSquareBracket);
@@ -61,11 +63,9 @@ public class Lexer {
     }
 
     private void addIdentifierToken() {
-
         while (Core.isAlphaNumeric(peek())) {
             next();
         }
-
         String text = source.substring(start, position);
         Kind type = BindingManager.KEYWORDS.get(text);
         addToken(type == null ? Kind.Identifier : type, type == null ? text : null);
@@ -91,19 +91,6 @@ public class Lexer {
         if (passString(() -> report("Unterminated string."))) return;
         next();
         addToken(Kind.String, source.substring(start + 1, position - 1));
-    }
-
-    private boolean matchNewLine() {
-        String str = System.lineSeparator();
-        for (int i = 0; i < str.length(); i++) {
-            var c = str.charAt(i);
-            var cr = currentChar();
-            if (cr != c) {
-                return false;
-            }
-            next();
-        }
-        return true;
     }
 
     private boolean passString(Runnable runnable) {
@@ -158,6 +145,19 @@ public class Lexer {
     private void addToken(Kind kind, Object value) {
         String subtext = source.substring(start, position);
         tokens.add(new Token(kind, value, subtext, line, col));
+    }
+
+    private boolean matchNewLine() {
+        String str = System.lineSeparator();
+        for (int i = 0; i < str.length(); i++) {
+            var c = str.charAt(i);
+            var cr = currentChar();
+            if (cr != c) {
+                return false;
+            }
+            next();
+        }
+        return true;
     }
 
     private boolean match(String expected) {

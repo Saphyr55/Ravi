@@ -16,4 +16,11 @@ public class Proposition {
         this.numeroLieu = numeroLieu;
     }
 
+    @Override
+    public String toString() {
+        return "Proposition{" +
+                "texte='" + texte + '\'' +
+                ", numeroLieu=" + numeroLieu +
+                '}';
+    }
 }

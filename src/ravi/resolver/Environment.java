@@ -25,10 +25,6 @@ public class Environment {
         declarations.put(name, value);
     }
 
-    public Value at(Integer distance, String text) {
-        return ancestor(distance).declarations.get(text);
-    }
-
     public Value value(String name) {
 
         if (declarations.containsKey(name)) {
@@ -38,14 +34,6 @@ public class Environment {
         if (enclosing != null) return enclosing.value(name);
 
         throw new InterpretException("Undefined variable '" + name + "' on get value.");
-    }
-
-    Environment ancestor(int distance) {
-        Environment environment = this;
-        for (int i = 0; i < distance; i++) {
-            environment = environment.enclosing;
-        }
-        return environment;
     }
 
     public Value search(String name) {
@@ -59,4 +47,5 @@ public class Environment {
         }
         throw new InterpretException("Undefined variable '" + name + "' on get value.");
     }
+
 }

@@ -50,7 +50,7 @@ public class App implements ActionListener {
 
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("ravi/game.ravi"), StandardCharsets.UTF_8);
+        String source = Files.readString(Path.of("ravi/TestList.ravi"), StandardCharsets.UTF_8);
 
         Lexer lexer = new Lexer(source, LinkedList::new);
         List<Token> tokens = lexer.scan();
@@ -61,9 +61,10 @@ public class App implements ActionListener {
         // System.out.println(program);
 
         Interpreter interpreter = new Interpreter(context());
-        ScopeResolver scopeResolver = new ScopeResolver(interpreter);
 
+        ScopeResolver scopeResolver = new ScopeResolver(interpreter);
         scopeResolver.resolve(program);
+
         interpreter.interpretProgram(program);
 
         for (int i = 0; i < LIEUX.size(); i++) {
@@ -73,7 +74,6 @@ public class App implements ActionListener {
         App app = new App();
         SwingUtilities.invokeLater(() -> app.init(0));
     }
-
 
     static Proposition mapValueToProposition(Value value) {
         if (value instanceof Value.VObject object &&
