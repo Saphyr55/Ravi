@@ -26,7 +26,9 @@ public class Lexer {
     }
 
     public List<Token> scan(String source) {
+
         this.source = source;
+
         while (!isAtEnd()) {
             start = position;
             nextToken();
@@ -58,7 +60,10 @@ public class Lexer {
 
     private void addCommentOrParenthesis() {
         if (match(Symbol.Asterisk)) {
-            while (!peekStr().equals(Symbol.Asterisk) && !peekStr().equals(Symbol.CloseParenthesis)) {
+            while (!isAtEnd() &&
+                    !peekStr().equals(Symbol.Asterisk) &&
+                    !peekStr().equals(Symbol.CloseParenthesis)) {
+                if (peek() == '\n') line++;
                 next();
             }
             Core.loop(2, this::next);

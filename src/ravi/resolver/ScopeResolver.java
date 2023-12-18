@@ -33,6 +33,17 @@ public class ScopeResolver {
         if (statement instanceof Statement.Instr instr) {
             instr.expression().forEach(this::resolve);
         }
+        if (statement instanceof Statement.Module module) {
+            declare(Nameable.stringOf(module.moduleName()));
+            define(Nameable.stringOf(module.moduleName()));
+            resolve(module.moduleContent());
+        }
+    }
+
+    private void resolve(ModuleContent content) {
+        if (content == null) return;
+        resolveLet(content.let().parameters(), content.let().result());
+        resolve(content.restContent());
     }
 
     private void resolve(Expression expression) {
@@ -48,6 +59,10 @@ public class ScopeResolver {
             resolve(application.expr());
             application.args().forEach(this::resolve);
             return;
+        }
+
+        if (expression instanceof Expression.Lambda lambda) {
+            resolve(lambda.expression());
         }
 
         if (expression instanceof Expression.Instr expr) {
@@ -95,7 +110,6 @@ public class ScopeResolver {
         resolve(rest.expression());
         resolveList(rest.rest());
     }
-
 
     private void beginScope() {
         scopes.push(new HashMap<>());

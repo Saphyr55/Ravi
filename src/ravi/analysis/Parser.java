@@ -108,12 +108,28 @@ public class Parser {
     }
 
     private Expression expression() {
-        return application();
+
+        Expression expression = application();
+
+        if (expression != null && check(Kind.Operator)) {
+            Token token = consume(Kind.Operator, "");
+            Expression right = expression();
+            return new Expression.ApplicationOperator(
+                    (String) token.value(), expression, right);
+        }
+
+        if (expression != null && check(Kind.DoubleColon)) {
+            consume(Kind.DoubleColon, "");
+            Expression tail = expression();
+            return new Expression.ConsCell(expression, tail);
+        }
+
+        return expression;
     }
 
     /**
      * Expr -> Expr Expr'<br>
-     * Expr' -> InfixOp Expr | :: Expr
+     * Expr' -> InfixOp Expr | :: Expr | epsilon
      *
      * @return expression
      */
@@ -121,19 +137,6 @@ public class Parser {
 
         Expression primary = expressionPrime();
         Expression expression = expressionPrime();
-
-        if (check(Kind.Operator)) {
-            Token token = consume(Kind.Operator, "");
-            Expression right = expression();
-            return new Expression.ApplicationOperator(
-                    (String) token.value(), primary, right);
-        }
-
-        if (check(Kind.DoubleColon)) {
-            consume(Kind.DoubleColon, "");
-            Expression tail = expression();
-            return new Expression.ConsCell(primary, tail);
-        }
 
         if (expression == null) {
             return primary;
@@ -143,7 +146,9 @@ public class Parser {
 
         while (expression != null) {
             expressions.add(expression);
-            expression = expression();
+            expression = application();
+            if (currentToken().line() > 90)
+                continue;
         }
 
         return new Expression.Application(primary, expressions);

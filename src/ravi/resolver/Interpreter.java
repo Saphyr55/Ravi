@@ -165,11 +165,18 @@ public final class Interpreter {
     private Value applyValueApplication(Value.VApplication application, List<Value> args) {
 
         var arity = application.application().arity();
+
         if (args.size() > arity) {
+            var l = args.subList(0, arity);
+            Value value = application.application().apply(this, l);
+            if (value instanceof Value.VApplication second) {
+                var l2 = args.subList(arity, args.size());
+                return second.application().apply(this, l2);
+            }
             throw new InterpretException("You try to pass to much argument in the function.");
         }
 
-        if (args.size() != arity) {
+        if (args.size() < arity) {
             return Application.value(arity - args.size(), (inter, futureArgs) -> {
                 var newArgs = Stream.concat(args.stream(), futureArgs.stream());
                 return application.application().apply(inter, newArgs.toList());
@@ -253,17 +260,24 @@ public final class Interpreter {
 
     void defineFunction(Environment env, String name, Parameters parameters, Expression result) {
 
+        List<String> params = parameters
+                .declarations()
+                .stream()
+                .map(Identifier.Lowercase::name)
+                .toList();
+        Expression r = result;
+
         if (parameters.declarations().isEmpty()) {
-            env.define(name, evaluate(result, env));
+            env.define(name, evaluate(r, env));
             return;
         }
 
-        env.define(name,
-                new Value.VApplication(new Func(parameters
-                    .declarations()
-                    .stream()
-                    .map(Identifier.Lowercase::name)
-                    .toList(), result, env)));
+        //if (result instanceof Expression.Application application) {
+        // r = application.expr();
+        // params = Stream.concat(params.stream(), application.args().stream().map()).toList();
+        //}
+
+        env.define(name, new Value.VApplication(new Func(params, r, env)));
     }
 
 

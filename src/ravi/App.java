@@ -54,9 +54,11 @@ public class App implements ActionListener {
         Lexer lexer = new Lexer();
         Parser parser = new Parser();
         Interpreter interpreter = new Interpreter(context());
+        ScopeResolver scopeResolver = new ScopeResolver(interpreter);
 
         List<Token> tokens = lexer.scan(source);
         Program program = parser.program(tokens);
+        scopeResolver.resolve(program);
         interpreter.interpretProgram(program);
 
         for (int i = 0; i < LIEUX.size(); i++) {

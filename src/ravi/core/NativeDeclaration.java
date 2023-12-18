@@ -22,6 +22,31 @@ public final class NativeDeclaration {
     }
 
     @RaviNative
+    static Value addInteger(Interpreter inter, Value.VInt v1, Value.VInt v2) {
+        return Value.integer(v1.integer() + v2.integer());
+    }
+
+    @RaviNative
+    static Value subtractInteger(Interpreter inter, Value.VInt v1, Value.VInt v2) {
+        return Value.integer(v1.integer() - v2.integer());
+    }
+
+    @RaviNative
+    static Value multiplyInteger(Interpreter inter, Value.VInt v1, Value.VInt v2) {
+        return Value.integer(v1.integer() * v2.integer());
+    }
+
+    @RaviNative
+    static Value divideInteger(Interpreter inter, Value.VInt v1, Value.VInt v2) {
+        return Value.integer(v1.integer() / v2.integer());
+    }
+
+    @RaviNative
+    static Value negativeInteger(Interpreter inter, Value.VInt v1) {
+        return Value.integer(-v1.integer());
+    }
+
+    @RaviNative
     static Value format(Interpreter inter, Value.VString str, Value.VList list) {
         return Value.string(String.format(str.content(),
                 list.values().stream().map(Value::toStr).toArray()));

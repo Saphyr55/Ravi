@@ -1,7 +1,23 @@
+let ( + ) x y = addInteger x y
+end
+
+let ( - ) x y = subtractInteger x y
+end
+
+let neg x = negativeInteger x
+end
+
+let ( * ) x y = multiplyInteger x y
+end
+
+let ( / ) x = divideInteger x y
+end
+
 
 module M =
 
-  let myFuncInM = fun _ -> mySecondFuncInM ()
+  let myFuncInM _ =
+    mySecondFuncInM ()
   end
 
   let mySecondFuncInM = fun _ ->
@@ -30,6 +46,15 @@ module List =
     | h :: t -> (f h) :: map f t
   end
 
+  let count l =
+    let aux l n =
+      match l with
+      | [] -> n
+      | _ :: t -> aux t (n + (neg 1))
+    in
+    aux l 0
+  end
+
 end
 
 let l =
@@ -56,9 +81,12 @@ let concatListAndPrint _ =
 end
 
 let f msg phi =
+  (*
+    My second comment
+  *)
   let t = "Andy" in
   let s = "Matthieu" in
-  let _ = print "x" in
+  let () = print "x" in
   phi $ format msg [t; s]
 end
 
@@ -73,3 +101,7 @@ end
 
 print $ mapTestList ( fun e -> format "Element: %s" [e] );
 print 9.48462;
+
+List.count l |> print;
+
+print $ 1 + 2 * 2 + 1;
