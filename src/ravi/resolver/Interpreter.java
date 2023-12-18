@@ -1,5 +1,6 @@
 package ravi.resolver;
 
+import ravi.analysis.Syntax;
 import ravi.model.Application;
 import ravi.model.Func;
 import ravi.model.Value;
@@ -148,6 +149,10 @@ public final class Interpreter {
             return evaluate(expr.result(), environment);
         }
 
+        if (expression instanceof Expression.Binary binary) {
+            return binary(binary);
+        }
+
         if (expression instanceof Expression.Application application) {
             if (evaluate(application.expr()) instanceof Value.VApplication vApplication) {
                 return applyValueApplication(vApplication, application
@@ -160,6 +165,35 @@ public final class Interpreter {
         }
 
         return null;
+    }
+
+    private Value binary(Expression.Binary binary) {
+
+        if (binary.operator().symbolInfixOp().equals(Syntax.Symbol.Slash)) {
+            var left = (Value.VInt) evaluate(binary.left());
+            var right = (Value.VInt) evaluate(binary.right());
+            return Value.integer(left.integer() * right.integer());
+        }
+
+        if (binary.operator().symbolInfixOp().equals(Syntax.Symbol.Asterisk)) {
+            var left = (Value.VInt) evaluate(binary.left());
+            var right = (Value.VInt) evaluate(binary.right());
+            return Value.integer(left.integer() * right.integer());
+        }
+
+        if (binary.operator().symbolInfixOp().equals(Syntax.Symbol.Minus)) {
+            var left = (Value.VInt) evaluate(binary.left());
+            var right = (Value.VInt) evaluate(binary.right());
+            return Value.integer(left.integer() - right.integer());
+        }
+
+        if (binary.operator().symbolInfixOp().equals(Syntax.Symbol.Plus)) {
+            var left = (Value.VInt) evaluate(binary.left());
+            var right = (Value.VInt) evaluate(binary.right());
+            return Value.integer(left.integer() + right.integer());
+        }
+
+        throw new InterpretException("");
     }
 
     private Value applyValueApplication(Value.VApplication application, List<Value> args) {
@@ -279,6 +313,5 @@ public final class Interpreter {
 
         env.define(name, new Value.VApplication(new Func(params, r, env)));
     }
-
 
 }

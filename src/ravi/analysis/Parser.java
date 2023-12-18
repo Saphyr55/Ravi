@@ -109,7 +109,7 @@ public class Parser {
 
     private Expression expression() {
 
-        Expression expression = application();
+        Expression expression = equality();
 
         if (expression != null && check(Kind.Operator)) {
             Token token = consume(Kind.Operator, "");
@@ -127,6 +127,93 @@ public class Parser {
         return expression;
     }
 
+    private Expression equality() {
+
+        Expression expr = comparison();
+
+        var value = currentToken().text();
+        var check = value.equals(Syntax.Symbol.NotEqual) ||
+                value.equals(Syntax.Symbol.Equal);
+
+        while (check(Kind.Operator) && check) {
+            Operator operator = operator();
+            Expression right = comparison();
+            expr = new Expression.Binary(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expression comparison() {
+        Expression expr = term();
+
+        var value = currentToken().text();
+        var check = value.equals(Syntax.Symbol.Greater) ||
+                value.equals(Syntax.Symbol.Lower)   ||
+                value.equals(Syntax.Symbol.LowerEqual) ||
+                value.equals(Syntax.Symbol.GreaterEqual);
+
+        while (check(Kind.Operator) && check) {
+            Operator operator = operator();
+            Expression right = term();
+            expr = new Expression.Binary(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expression term() {
+
+        Expression expr = factor();
+
+        var value = currentToken().text();
+        var check =
+                value.equals(Syntax.Symbol.Minus) ||
+                value.equals(Syntax.Symbol.Plus);
+
+        while (check(Kind.Operator) && check) {
+            Operator operator = operator();
+            Expression right = factor();
+            expr = new Expression.Binary(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expression factor() {
+
+        Expression expr = unary();
+
+        var value = currentToken().text();
+        var check =
+                value.equals(Syntax.Symbol.Slash) ||
+                value.equals(Syntax.Symbol.Asterisk);
+
+        while (check(Kind.Operator) && check) {
+            Operator operator = operator();
+            Expression right = unary();
+            expr = new Expression.Binary(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expression unary() {
+
+        var value = currentToken().text();
+        var check =
+                value.equals(Syntax.Symbol.Exclamation) ||
+                value.equals(Syntax.Symbol.Minus);
+
+        if (check(Kind.Operator) && check) {
+            Operator operator = operator();
+            Expression right = unary();
+            return new Expression.Unary(operator, right);
+        }
+
+        return application();
+    }
+
     /**
      * Expr -> Expr Expr'<br>
      * Expr' -> InfixOp Expr | :: Expr | epsilon
@@ -135,8 +222,8 @@ public class Parser {
      */
     private Expression application() {
 
-        Expression primary = expressionPrime();
-        Expression expression = expressionPrime();
+        Expression primary = primary();
+        Expression expression = primary();
 
         if (expression == null) {
             return primary;
@@ -147,14 +234,12 @@ public class Parser {
         while (expression != null) {
             expressions.add(expression);
             expression = application();
-            if (currentToken().line() > 90)
-                continue;
         }
 
         return new Expression.Application(primary, expressions);
     }
 
-    private Expression expressionPrime() {
+    private Expression primary() {
         if (check(Kind.String)) return stringExpr();
         if (check(Kind.Text)) return textExpr();
         if (check(Kind.LetKw)) return letIn();

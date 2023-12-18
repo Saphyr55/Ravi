@@ -34,4 +34,9 @@ public sealed interface Expression {
     record ModuleCallExpr(Nameable.ModuleName moduleName, Nameable.ValueName valueName) implements Expression { }
 
     record ValueNameExpr(Nameable.ValueName valueName) implements Expression { }
+
+    record Unary(Operator operator, Expression right) implements Expression { }
+
+    record Binary(Expression left, Operator operator, Expression right) implements Expression  { }
+
 }

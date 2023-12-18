@@ -1,18 +1,3 @@
-let ( + ) x y = addInteger x y
-end
-
-let ( - ) x y = subtractInteger x y
-end
-
-let neg x = negativeInteger x
-end
-
-let ( * ) x y = multiplyInteger x y
-end
-
-let ( / ) x = divideInteger x y
-end
-
 
 module M =
 
@@ -50,9 +35,9 @@ module List =
     let aux l n =
       match l with
       | [] -> n
-      | _ :: t -> aux t (n + (neg 1))
+      | _ :: t -> aux t (n - 1)
     in
-    aux l 0
+    aux l
   end
 
 end
@@ -101,7 +86,10 @@ end
 
 print $ mapTestList ( fun e -> format "Element: %s" [e] );
 print 9.48462;
+let x = 2
+end
 
-List.count l |> print;
+print $ 1 + x * x + 1;
 
-print $ 1 + 2 * 2 + 1;
+List.count l 0 |> print;
+

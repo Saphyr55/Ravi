@@ -100,6 +100,10 @@ public final class Syntax {
         public static final String Greater = ">";
         public static final String Lower = "<";
         public static final String Plus = "+";
+        public static final String Exclamation = "!";
+        public static final String GreaterEqual = ">=";
+        public static final String LowerEqual = "<=";
+        public static final String NotEqual = "!=";
     }
 
     public static boolean isOperator(String c) {
