@@ -1,4 +1,4 @@
-package ravi.syntax;
+package ravi.analysis;
 
 import static ravi.core.Core.stringMax;
 

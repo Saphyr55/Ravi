@@ -1,12 +1,14 @@
-package ravi.syntax;
+package ravi.analysis;
 
+import ravi.analysis.ast.Operator;
 import ravi.core.BindingManager;
 import ravi.core.Core;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ravi.syntax.Syntax.Symbol;
+import static ravi.analysis.Syntax.Symbol;
+import static ravi.analysis.Syntax.isOperator;
 
 public class Lexer {
 
@@ -32,33 +34,35 @@ public class Lexer {
 
         tokens.add(new Token(Kind.EOF, null, String.valueOf(peek()), line, col));
         if (hadError) return List.of();
+
         return tokens;
     }
 
     private void nextToken() {
-        final String s = String.valueOf(advance());
-        switch (s) {
-            case Symbol.Pipe -> addToken(Kind.Pipe);
+        final String c = String.valueOf(advance());
+        switch (c) {
             case Symbol.Colon -> addToken(match(Symbol.Colon) ? Kind.DoubleColon : Kind.Colon);
             case Symbol.OpenParenthesis -> addToken(Kind.OpenParenthesis);
             case Symbol.CloseParenthesis -> addToken(Kind.CloseParenthesis);
             case Symbol.OpenSquareBracket -> addToken(Kind.OpenSquareBracket);
             case Symbol.CloseSquareBracket -> addToken(Kind.CloseSquareBracket);
-            case Symbol.Minus -> addToken(match(Symbol.Arrow) ? Kind.Arrow : Kind.Minus);
-            case Symbol.Equal -> addToken(Kind.Equal);
             case Symbol.Comma -> addToken(Kind.Comma);
             case Symbol.Semicolon -> addToken(Kind.Semicolon);
             case Symbol.Dot -> addToken(Kind.Dot);
             case Symbol.DoubleQuote -> addStringToken();
             case Symbol.BackslashN -> { line++; col = 0; }
             case Symbol.Space, Symbol.BackslashR, Symbol.BackslashT -> { }
-            default -> addDefaultToken(s);
+            default -> addDefaultToken(c);
         }
     }
 
     private void addDefaultToken(String c) {
+        if (Syntax.isOperator(c)) {
+            addOperator(c);
+            return;
+        }
         if (Character.isDigit(c.charAt(0))){
-            addNumberToken(c.charAt(0));
+            addNumberToken();
             return;
         }
         if (Core.isAlpha(c.charAt(0))) {
@@ -68,19 +72,56 @@ public class Lexer {
         report("Unexpected character.");
     }
 
-    private void addNumberToken(char c) {
-        while(Character.isDigit(peek())){
+    private void addOperator(String c) {
+
+        if (c.equals(Symbol.Minus)) {
+            if (match(Symbol.Greater)) {
+                addToken(Kind.Arrow);
+                return;
+            }
+        }
+
+        if (c.equals(Symbol.Equal)) {
+            if (!Syntax.isOperator(advanceStr())) {
+                addToken(Kind.Equal);
+                return;
+            }
+        }
+
+        if (c.equals(Symbol.Pipe)) {
+            if (!Syntax.isOperator(advanceStr())) {
+                addToken(Kind.Pipe);
+                return;
+            }
+        }
+
+        while (Syntax.isOperator(peekStr())) {
             next();
         }
-        if(peek() == '.' ){
+
+        String text = source.substring(start, position);
+        addToken(Kind.Operator, text);
+    }
+
+    private String advanceStr() {
+        return String.valueOf(advance());
+    }
+
+    private void addNumberToken() {
+
+        while(Character.isDigit(peek())) {
             next();
-            while(Character.isDigit(peek())){
+        }
+
+        if(peek() == '.' ) {
+            next();
+            while(Character.isDigit(peek())) {
                 next();
             }
             String text = source.substring(start, position);
-            addToken(Kind.Float,Float.parseFloat(text));
+            addToken(Kind.Float, Float.parseFloat(text));
         }
-        else{
+        else {
             String text = source.substring(start, position);
             addToken(Kind.Int,Integer.parseInt(text));
         }
@@ -144,6 +185,10 @@ public class Lexer {
         return source.charAt(position);
     }
 
+    private String peekStr() {
+        return String.valueOf(peek());
+    }
+
     private char advance() {
         return source.charAt(next());
     }
@@ -159,6 +204,10 @@ public class Lexer {
 
     private char currentChar() {
         return position >= source.length() ? '\0' : source.charAt(position);
+    }
+
+    private String currentCharStr() {
+        return String.valueOf(currentChar());
     }
 
     private boolean isAtEnd() {

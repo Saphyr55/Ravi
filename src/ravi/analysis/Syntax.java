@@ -1,4 +1,4 @@
-package ravi.syntax;
+package ravi.analysis;
 
 
 import ravi.core.Bind;
@@ -79,6 +79,12 @@ public final class Syntax {
         public static final String Minus = "-";
         public static final String Space = " ";
         public static final String Equal = "=";
+        public static final String At = "@";
+        public static final String Slash = "/";
+        public static final String Dollar = "$";
+        public static final String Asterisk = "*";
+        public static final String Circumflex = "^";
+        public static final String Ampersand = "&";
         public static final String CloseSquareBracket = "]";
         public static final String OpenSquareBracket = "[";
         public static final String BackslashN = "\n";
@@ -91,7 +97,27 @@ public final class Syntax {
         public static final String CloseParenthesis = ")";
         public static final String Colon = ":";
         public static final String Pipe = "|";
-        public static final String Arrow = ">";
+        public static final String Greater = ">";
+        public static final String Lower = "<";
+        public static final String Plus = "+";
+    }
+
+    public static boolean isOperator(String c) {
+        return switch (c) {
+            case    Symbol.Plus,
+                    Symbol.Minus,
+                    Symbol.Dollar,
+                    Symbol.Pipe,
+                    Symbol.At,
+                    Symbol.Lower,
+                    Symbol.Ampersand,
+                    Symbol.Circumflex,
+                    Symbol.Greater,
+                    Symbol.Slash,
+                    Symbol.Equal,
+                    Symbol.Asterisk -> true;
+            default -> false;
+        };
     }
 
 

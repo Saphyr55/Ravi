@@ -20,10 +20,10 @@ import ravi.resolver.Environment;
 import ravi.resolver.InterpretException;
 import ravi.resolver.Interpreter;
 import ravi.resolver.ScopeResolver;
-import ravi.syntax.Lexer;
-import ravi.syntax.Parser;
-import ravi.syntax.ast.Program;
-import ravi.syntax.Token;
+import ravi.analysis.Lexer;
+import ravi.analysis.Parser;
+import ravi.analysis.ast.Program;
+import ravi.analysis.Token;
 
 import javax.swing.*;
 import java.awt.*;

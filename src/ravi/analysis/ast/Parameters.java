@@ -1,4 +1,4 @@
-package ravi.syntax.ast;
+package ravi.analysis.ast;
 
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package ravi.core;
 
-import ravi.syntax.Kind;
+import ravi.analysis.Kind;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

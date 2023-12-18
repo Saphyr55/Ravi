@@ -1,4 +1,4 @@
-package ravi.syntax;
+package ravi.analysis;
 
 public enum Kind {
 
@@ -25,8 +25,8 @@ public enum Kind {
     CloseParenthesis,
     Pipe,
     Arrow,
-    Minus,
     Dot,
+    Operator,
 
     // Keywords
     OpenKw,

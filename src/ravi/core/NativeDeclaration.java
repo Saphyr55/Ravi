@@ -51,7 +51,7 @@ public final class NativeDeclaration {
 
     private static void genNative(Method method, Environment environment, RaviNative let) {
         Application application = (inter, args) -> call(method, inter, args);
-        Value value = Application.value(method.getParameterCount() + 1, application);
+        Value value = Application.value(method.getParameterCount() - 1, application);
         environment.define(genNameNativeLet(method, let), value);
     }
 

@@ -39,7 +39,7 @@ public class Environment {
 
         if (enclosing != null) return enclosing.value(name);
 
-        throw new InterpretException("Undefined variable '" + name + "' on get moduleName.");
+        throw new InterpretException("Undefined variable '" + name + "' on get value name.");
     }
 
     public Value search(String name) {

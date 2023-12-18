@@ -12,6 +12,7 @@ public sealed interface Value {
     record VString(String content) implements Value { }
 
     record VInt(Integer integer) implements Value { }
+
     record VFloat(Float cFloat) implements Value { }
 
     record VUnit() implements Value { }

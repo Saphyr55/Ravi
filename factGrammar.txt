@@ -9,13 +9,14 @@ Statement -> Let
 Instr -> Expr ;
 
 Module -> module ModuleName = ModuleContent end
+
 ModuleContent -> ModuleContent'
 ModuleContent' -> Let ModuleContent
                 | epsilon
 
 Let -> let ValueName Parameters = Expr end
 
-Parameters -> ValueName Parameters'
+Parameters -> LabelName Parameters'
 Parameters' -> Parameters
             | epsilon
 
@@ -30,15 +31,17 @@ Expr -> Expr Expr'
       | begin Expr end
       | match Expr with Pattern
 Expr' -> Argument
+        | InfixOp Expr
         | :: Expr
 
 Pattern -> _
         | Pattern :: Pattern
-        | ValueName
+        | LabelName
         | ( Pattern )
         | Constant
 
-Constant -> Number // Not implemented yet
+Constant -> Int // Not implemented yet
+        | Float
         | Text
         | String
         | [ ]
@@ -56,11 +59,20 @@ RestList -> ; Expr RestList'
 RestList' -> RestList
           | epsilon
 
-Number -> [0-9]* // Not implemented yet
+Int -> [0-9]*
+Float -> [0-9]+ . [0-9]*
+
+LabelName -> LowercaseIdentifier
 
 ValueName -> LowercaseIdentifier
+          | ( InfixOp )
 
 ModuleName -> CapitalizedIdentifier
+
+InfixOp -> InfixSymbol
+InfixSymbol -> Operator InfixOp
+            | epsilon
+Operator -> $ | & | * | + | - | / | = | > | < | @ | ^
 
 CapitalizedIdentifier -> [A-Z] CapitalizedIdentifier'
 

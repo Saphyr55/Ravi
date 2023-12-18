@@ -1,6 +1,6 @@
 package ravi.resolver;
 
-import ravi.syntax.ast.*;
+import ravi.analysis.ast.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,8 +25,8 @@ public class ScopeResolver {
 
     private void resolve(Statement statement) {
         if (statement instanceof Statement.Let let) {
-            declare(let.name().name());
-            define(let.name().name());
+            declare(Nameable.stringOf(let.name()));
+            define(Nameable.stringOf(let.name()));
             resolveLet(let.parameters(), let.result());
             return;
         }
@@ -62,9 +62,9 @@ public class ScopeResolver {
         }
 
         if (expression instanceof Expression.LetIn expr) {
-            declare(expr.valueName().name());
+            declare(Nameable.stringOf(expr.valueName()));
             resolveLet(expr.parameters(), expr.expr());
-            define(expr.valueName().name());
+            define(Nameable.stringOf(expr.valueName()));
             resolve(expr.result());
             return;
         }

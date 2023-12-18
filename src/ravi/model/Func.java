@@ -2,7 +2,7 @@ package ravi.model;
 
 import ravi.resolver.Environment;
 import ravi.resolver.Interpreter;
-import ravi.syntax.ast.Expression;
+import ravi.analysis.ast.Expression;
 
 import java.util.List;
 

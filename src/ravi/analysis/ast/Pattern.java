@@ -1,4 +1,4 @@
-package ravi.syntax.ast;
+package ravi.analysis.ast;
 
 public sealed interface Pattern {
 
@@ -10,7 +10,7 @@ public sealed interface Pattern {
 
     record PGroup(Pattern inner) implements Pattern { }
 
-    record PValueName(Identifier.Lowercase identifier) implements Pattern { }
+    record PLabelName(Nameable.LabelName labelName) implements Pattern { }
 
 
 }

@@ -1,7 +1,7 @@
 package ravi.core;
 
-import ravi.syntax.Kind;
-import ravi.syntax.Syntax;
+import ravi.analysis.Kind;
+import ravi.analysis.Syntax;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;

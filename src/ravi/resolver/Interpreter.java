@@ -1,14 +1,16 @@
 package ravi.resolver;
 
+import ravi.model.Application;
 import ravi.model.Func;
 import ravi.model.Value;
-import ravi.syntax.ast.*;
+import ravi.analysis.ast.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class Interpreter {
+public final class Interpreter {
 
     private Environment environment;
 
@@ -26,11 +28,12 @@ public class Interpreter {
     void interpretInstruction(Statement statement) {
 
         if (statement instanceof Statement.Let let) {
-            defineFunction(environment, let.name(), let.parameters(), let.result());
+            String name = Nameable.stringOf(let.name());
+            defineFunction(environment, name, let.parameters(), let.result());
         }
 
         else if (statement instanceof Statement.Module module) {
-            String moduleName = module.moduleName().name();
+            String moduleName = Nameable.stringOf(module.moduleName());
             Environment moduleEnv = new Environment(environment);
             environment.define(moduleName, Value.module(moduleName, moduleEnv));
             interpretModuleContent(moduleEnv, module.moduleContent());
@@ -40,13 +43,12 @@ public class Interpreter {
             instr.expression().forEach(this::evaluate);
         }
 
-        
     }
 
     void interpretModuleContent(Environment environment, ModuleContent content) {
         if (content == null) return;
         Statement.Let let = content.let();
-        defineFunction(environment, let.name(), let.parameters(), let.result());
+        defineFunction(environment, Nameable.stringOf(let.name()), let.parameters(), let.result());
         interpretModuleContent(environment, content.restContent());
     }
 
@@ -59,10 +61,21 @@ public class Interpreter {
 
     Value evaluate(Expression expression) {
 
+        if (expression instanceof Expression.ApplicationOperator appOp) {
+            Value value = environment.search(appOp.op());
+            if (value instanceof Value.VApplication application) {
+                return application.application().apply(this, List.of(
+                        evaluate(appOp.right()),
+                        evaluate(appOp.left()))
+                );
+            }
+            throw new InterpretException("( %s ) is not an application".formatted(appOp.op()));
+        }
+
         if (expression instanceof Expression.ModuleCallExpr expr) {
-            Value value = environment.value(expr.moduleName().name());
+            Value value = environment.value(expr.moduleName().name().name());
             if (value instanceof Value.VModule module) {
-                return module.environment().get(expr.valueName().name());
+                return module.environment().get(Nameable.stringOf(expr.valueName()));
             }
             throw new InterpretException("");
         }
@@ -88,7 +101,7 @@ public class Interpreter {
         }
 
         if (expression instanceof Expression.Lambda lambda) {
-            return new Value.VApplication(new Func(lambda.parameters()
+            return Value.application(new Func(lambda.parameters()
                     .declarations()
                     .stream()
                     .map(Identifier.Lowercase::name)
@@ -100,12 +113,12 @@ public class Interpreter {
         }
 
         if (expression instanceof  Expression.ListExpr expr) {
-            ArrayList<Value> values = new ArrayList<>();
+            List<Value> values = new ArrayList<>();
             if (expr.list() instanceof RaviList.EmptyList){
-                return new Value.VList(new ArrayList<>());
+                return new Value.VList(List.of());
             } else if (expr.list() instanceof RaviList.List list) {
                 values.add(evaluate(list.head()));
-                evaluateList(list.tail(),values);
+                evaluateList(list.tail(), values);
             }
             return Value.list(values);
         }
@@ -123,7 +136,7 @@ public class Interpreter {
         }
 
         if (expression instanceof Expression.ValueNameExpr expr) {
-            return lookUpDeclaration(expr.valueName().name());
+            return lookUpDeclaration(Nameable.stringOf(expr.valueName()));
         }
 
         if (expression instanceof Expression.Instr) {
@@ -131,42 +144,47 @@ public class Interpreter {
         }
 
         if (expression instanceof Expression.LetIn expr)  {
-            defineFunction(environment, expr.valueName(), expr.parameters(), expr.expr());
+            defineFunction(environment, Nameable.stringOf(expr.valueName()), expr.parameters(), expr.expr());
             return evaluate(expr.result(), environment);
         }
 
         if (expression instanceof Expression.Application application) {
-
-            Value value = evaluate(application.expr());
-
-            List<Value> args = application
-                    .args()
-                    .stream()
-                    .map(this::evaluate)
-                    .map(v -> {
-                        if (v instanceof Value.VApplication f && f.application().arity() == 0) {
-                            return f.application().apply(this, List.of());
-                        }
-                        return v;
-                    })
-                    .toList();
-
-            if (value instanceof Value.VApplication VApplication) {
-                return VApplication.application().apply(this, args);
+            if (evaluate(application.expr()) instanceof Value.VApplication vApplication) {
+                return applyValueApplication(vApplication, application
+                        .args()
+                        .stream()
+                        .map(this::evaluate)
+                        .toList());
             }
-
-            return value;
+            throw new InterpretException("You try to pass argument to a not function.");
         }
 
         return null;
+    }
+
+    private Value applyValueApplication(Value.VApplication application, List<Value> args) {
+
+        var arity = application.application().arity();
+        if (args.size() > arity) {
+            throw new InterpretException("You try to pass to much argument in the function.");
+        }
+
+        if (args.size() != arity) {
+            return Application.value(arity - args.size(), (inter, futureArgs) -> {
+                var newArgs = Stream.concat(args.stream(), futureArgs.stream());
+                return application.application().apply(inter, newArgs.toList());
+            });
+        }
+
+        return application.application().apply(this, args);
     }
 
     private boolean patternMatch(Pattern pattern, Value value) {
 
         if (pattern instanceof Pattern.PAny) return true;
 
-        if (pattern instanceof Pattern.PValueName identifier) {
-            environment.define(identifier.identifier().name(), value);
+        if (pattern instanceof Pattern.PLabelName name) {
+            environment.define(Nameable.stringOf(name.labelName()), value);
             return true;
         }
 
@@ -233,14 +251,14 @@ public class Interpreter {
         return value;
     }
 
-    void defineFunction(Environment env, Identifier.Lowercase name, Parameters parameters, Expression result) {
+    void defineFunction(Environment env, String name, Parameters parameters, Expression result) {
 
         if (parameters.declarations().isEmpty()) {
-            env.define(name.name(), evaluate(result, env));
+            env.define(name, evaluate(result, env));
             return;
         }
 
-        env.define(name.name(),
+        env.define(name,
                 new Value.VApplication(new Func(parameters
                     .declarations()
                     .stream()

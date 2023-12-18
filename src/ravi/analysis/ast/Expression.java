@@ -1,4 +1,4 @@
-package ravi.syntax.ast;
+package ravi.analysis.ast;
 
 import java.util.List;
 
@@ -8,9 +8,11 @@ public sealed interface Expression {
 
     record Application(Expression expr, List<Expression> args) implements Expression { }
 
+    record ApplicationOperator(String op, Expression right, Expression left) implements Expression { }
+
     record Instr(Expression primary, Expression result) implements Expression {}
 
-    record LetIn(Identifier.Lowercase valueName, Parameters parameters, Expression expr, Expression result) implements Expression { }
+    record LetIn(Nameable.ValueName valueName, Parameters parameters, Expression expr, Expression result) implements Expression { }
 
     record GroupExpr(Expression expr) implements Expression { }
 
@@ -19,8 +21,6 @@ public sealed interface Expression {
     record ListExpr(RaviList list) implements Expression { }
 
     record ConstantExpr(Constant constant) implements Expression { }
-
-    record ValueNameExpr(Identifier.Lowercase valueName) implements Expression { }
 
     record ConsCell(Expression head, Expression tail) implements Expression { }
 
@@ -31,6 +31,7 @@ public sealed interface Expression {
 
     record Lambda(Parameters parameters, Expression expression) implements Expression { }
 
-    record ModuleCallExpr(Identifier.Capitalized moduleName, Identifier.Lowercase valueName) implements Expression { }
+    record ModuleCallExpr(Nameable.ModuleName moduleName, Nameable.ValueName valueName) implements Expression { }
 
+    record ValueNameExpr(Nameable.ValueName valueName) implements Expression { }
 }

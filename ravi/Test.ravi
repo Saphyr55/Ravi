@@ -1,7 +1,10 @@
 
 module M =
 
-  let myFuncInM _ =
+  let myFuncInM = fun _ -> mySecondFuncInM ()
+  end
+
+  let mySecondFuncInM = fun _ ->
     print "Hello World!"
   end
 
@@ -12,8 +15,10 @@ module List =
   let empty = []
   end
 
-  let isEmpty l =
-    match l with
+  let ( @ ) l1 l2 = concat l1 l2
+  end
+
+  let isEmpty l = match l with
     | [] -> "true"
     | _ -> "false"
   end
@@ -35,18 +40,29 @@ let l =
   ]
 end
 
-let concatListAndPrint _ = print
-  (concat l [ "2"; () ])
+let ( @ ) l1 l2 = List.( @ ) l1 l2
+end
+
+let ( |> ) x f = f x
+end
+
+let ( $ ) f x = f x
+end
+
+let concatListAndPrint _ =
+  print $ l @ [ "2"; () ]
 end
 
 let f msg phi =
   let t = "Andy" in
   let s = "Matthieu" in
-  phi (format msg [t; s])
+  let _ = print "x" in
+  phi $ format msg [t; s]
 end
 
 concatListAndPrint ();
-f "Hello, %s and %s!" print;
+print |> (f "Hello, %s and %s!");
+
 
 print (List.isEmpty []);
 print (List.isEmpty ("8" :: "8" :: List.empty));
@@ -54,5 +70,5 @@ print (List.isEmpty ("8" :: "8" :: List.empty));
 let mapTestList f = List.map f l
 end
 
-print (mapTestList ( fun e -> format "Element: %s" [e] ) );
+print $ mapTestList ( fun e -> format "Element: %s" [e] );
 print 9.48462;
