@@ -18,9 +18,10 @@ module List =
   let ( @ ) l1 l2 = concat l1 l2
   end
 
-  let isEmpty l = match l with
-    | [] -> "true"
-    | _ -> "false"
+  let isEmpty l =
+    match l with
+    | [] -> 1
+    | _ -> 0
   end
 
   let map f l =
@@ -50,6 +51,7 @@ let ( $ ) f x = f x
 end
 
 let concatListAndPrint _ =
+  (* My comment *)
   print $ l @ [ "2"; () ]
 end
 
@@ -61,8 +63,7 @@ let f msg phi =
 end
 
 concatListAndPrint ();
-print |> (f "Hello, %s and %s!");
-
+print |> f "Hello, %s and %s!";
 
 print (List.isEmpty []);
 print (List.isEmpty ("8" :: "8" :: List.empty));

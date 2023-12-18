@@ -4,6 +4,7 @@ import ravi.analysis.ast.Operator;
 import ravi.core.BindingManager;
 import ravi.core.Core;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -13,20 +14,19 @@ import static ravi.analysis.Syntax.isOperator;
 public class Lexer {
 
     static boolean hadError = false;
-    private final String source;
+    private String source;
     private int position;
     private int start;
     private int line;
     private int col;
     private final List<Token> tokens;
 
-    public Lexer(String source, Supplier<List<Token>> listSupplier) {
-        this.tokens = listSupplier.get();
-        this.source = source;
+    public Lexer() {
+        this.tokens = new LinkedList<>();
     }
 
-    public List<Token> scan() {
-
+    public List<Token> scan(String source) {
+        this.source = source;
         while (!isAtEnd()) {
             start = position;
             nextToken();
@@ -42,7 +42,7 @@ public class Lexer {
         final String c = String.valueOf(advance());
         switch (c) {
             case Symbol.Colon -> addToken(match(Symbol.Colon) ? Kind.DoubleColon : Kind.Colon);
-            case Symbol.OpenParenthesis -> addToken(Kind.OpenParenthesis);
+            case Symbol.OpenParenthesis -> addCommentOrParenthesis();
             case Symbol.CloseParenthesis -> addToken(Kind.CloseParenthesis);
             case Symbol.OpenSquareBracket -> addToken(Kind.OpenSquareBracket);
             case Symbol.CloseSquareBracket -> addToken(Kind.CloseSquareBracket);
@@ -54,6 +54,17 @@ public class Lexer {
             case Symbol.Space, Symbol.BackslashR, Symbol.BackslashT -> { }
             default -> addDefaultToken(c);
         }
+    }
+
+    private void addCommentOrParenthesis() {
+        if (match(Symbol.Asterisk)) {
+            while (!peekStr().equals(Symbol.Asterisk) && !peekStr().equals(Symbol.CloseParenthesis)) {
+                next();
+            }
+            Core.loop(2, this::next);
+            return;
+        }
+        addToken(Kind.OpenParenthesis);
     }
 
     private void addDefaultToken(String c) {

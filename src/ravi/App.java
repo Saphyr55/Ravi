@@ -51,17 +51,12 @@ public class App implements ActionListener {
 
         String source = Files.readString(Path.of("ravi/Test.ravi"), StandardCharsets.UTF_8);
 
-        Lexer lexer = new Lexer(source, LinkedList::new);
-        List<Token> tokens = lexer.scan();
-
-        Parser parser = new Parser(tokens);
-        Program program = parser.program();
-
+        Lexer lexer = new Lexer();
+        Parser parser = new Parser();
         Interpreter interpreter = new Interpreter(context());
 
-        ScopeResolver scopeResolver = new ScopeResolver(interpreter);
-        scopeResolver.resolve(program);
-
+        List<Token> tokens = lexer.scan(source);
+        Program program = parser.program(tokens);
         interpreter.interpretProgram(program);
 
         for (int i = 0; i < LIEUX.size(); i++) {

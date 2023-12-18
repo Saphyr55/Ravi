@@ -6,11 +6,16 @@ import java.util.*;
 
 public class Parser {
 
-    private final List<Token> tokens;
+    private List<Token> tokens;
     private int position;
 
-    public Parser(List<Token> tokens) {
-        this.tokens = tokens;
+    public Parser() {
+        this.tokens = List.of();
+    }
+
+    public Program program(List<Token> tokens) {
+        this.tokens = List.copyOf(tokens);
+        return program();
     }
 
     /**
@@ -19,7 +24,7 @@ public class Parser {
      *
      * @return program
      */
-    public Program program() {
+    private Program program() {
         Statement statement = statement();
         Program program = isAtEnd() ? null : program();
         return new Program(statement, program);
