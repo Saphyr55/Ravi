@@ -21,27 +21,7 @@ public final class NativeDeclaration {
         return Value.unit();
     }
 
-    @RaviNative
-    static Value addInteger(Interpreter inter, Value.VInt v1, Value.VInt v2) {
-        return Value.integer(v1.integer() + v2.integer());
-    }
-
-    @RaviNative
-    static Value subtractInteger(Interpreter inter, Value.VInt v1, Value.VInt v2) {
-        return Value.integer(v1.integer() - v2.integer());
-    }
-
-    @RaviNative
-    static Value multiplyInteger(Interpreter inter, Value.VInt v1, Value.VInt v2) {
-        return Value.integer(v1.integer() * v2.integer());
-    }
-
-    @RaviNative
-    static Value divideInteger(Interpreter inter, Value.VInt v1, Value.VInt v2) {
-        return Value.integer(v1.integer() / v2.integer());
-    }
-
-    @RaviNative
+    @RaviNative(name = "neg")
     static Value negativeInteger(Interpreter inter, Value.VInt v1) {
         return Value.integer(-v1.integer());
     }
