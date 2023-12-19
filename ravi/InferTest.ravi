@@ -1,0 +1,13 @@
+
+val x : 'a. 'a -> int
+
+let x a = 0
+end
+
+let id x = x
+end
+
+let f g =
+  let a = 0 in
+  g (id a)
+end

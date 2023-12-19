@@ -4,7 +4,7 @@ import java.util.List;
 
 public sealed interface Expression {
 
-    record UnitExpr() implements Expression { }
+record UnitExpr() implements Expression { }
 
     record Application(Expression expr, List<Expression> args) implements Expression { }
 

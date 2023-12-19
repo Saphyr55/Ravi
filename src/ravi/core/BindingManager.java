@@ -7,7 +7,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BindingManager {
+public final class BindingManager {
 
     public static final Map<String, Kind> KEYWORDS = new HashMap<>();
     static {

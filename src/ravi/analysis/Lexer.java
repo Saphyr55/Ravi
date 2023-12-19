@@ -17,8 +17,8 @@ public class Lexer {
     private String source;
     private int position;
     private int start;
-    private int line;
-    private int col;
+    private int line = 1;
+    private int col = 1;
     private final List<Token> tokens;
 
     public Lexer() {

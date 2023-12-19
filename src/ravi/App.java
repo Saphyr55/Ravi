@@ -14,6 +14,9 @@ Réalisé par :
 package ravi;
 
 import ravi.core.NativeDeclaration;
+import ravi.infer.Context;
+import ravi.infer.Inference;
+import ravi.infer.Scheme;
 import ravi.model.Application;
 import ravi.model.Value;
 import ravi.resolver.Environment;
@@ -49,15 +52,20 @@ public class App implements ActionListener {
 
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("ravi/Test.ravi"), StandardCharsets.UTF_8);
+        String source = Files.readString(Path.of("ravi/InferTest.ravi"), StandardCharsets.UTF_8);
 
         Lexer lexer = new Lexer();
         Parser parser = new Parser();
         Interpreter interpreter = new Interpreter(context());
+        Inference inference = new Inference();
+
         ScopeResolver scopeResolver = new ScopeResolver(interpreter);
 
         List<Token> tokens = lexer.scan(source);
         Program program = parser.program(tokens);
+
+        inference.infer(new Context(), program);
+
         scopeResolver.resolve(program);
         interpreter.interpretProgram(program);
 

@@ -4,7 +4,7 @@ import ravi.model.Value;
 
 import java.util.HashMap;
 
-public class Environment {
+public final class Environment {
 
     private final Environment enclosing;
     private final HashMap<String, Value> declarations;

@@ -1,4 +1,4 @@
 package ravi.core;
 
-public class BindNativeFunction {
+public final class BindNativeFunction {
 }

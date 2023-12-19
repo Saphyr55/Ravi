@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-public class ScopeResolver {
+public final class ScopeResolver {
 
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
@@ -134,8 +134,8 @@ public class ScopeResolver {
     private void resolveLet(Parameters parameters, Expression result) {
         beginScope();
         for (var param : parameters.declarations()) {
-            declare(param.name());
-            define(param.name());
+            declare(Nameable.stringOf(param));
+            define(Nameable.stringOf(param));
         }
         resolve(result);
         endScope();

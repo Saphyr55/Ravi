@@ -233,7 +233,7 @@ public class Parser {
 
         while (expression != null) {
             expressions.add(expression);
-            expression = application();
+            expression = primary();
         }
 
         return new Expression.Application(primary, expressions);
@@ -438,13 +438,12 @@ public class Parser {
      * @return parameters
      */
     private Parameters parameters() {
-        List<Identifier.Lowercase> identifiers = new LinkedList<>();
+        List<Nameable.LabelName> labelNames = new LinkedList<>();
         while (check(Kind.LowercaseIdentifier)) {
-            Token token = consume(Kind.LowercaseIdentifier, "We need an valueName.");
-            Identifier.Lowercase identifier = new Identifier.Lowercase((String) token.value());
-            identifiers.add(identifier);
+            Nameable.LabelName labelName = labelName("We need an valueName.");
+            labelNames.add(labelName);
         }
-        return new Parameters(identifiers);
+        return new Parameters(labelNames);
     }
 
     /**
@@ -520,7 +519,6 @@ public class Parser {
      * @return constant
      */
     private Constant constant() {
-        Token c = currentToken();
         if (check(Kind.OpenSquareBracket)) return emptyListConstant();
         if (check(Kind.Text)) return text();
         if (check(Kind.String)) return string();

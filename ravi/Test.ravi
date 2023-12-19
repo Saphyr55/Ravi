@@ -1,3 +1,11 @@
+let ( ** ) x y =
+  let aux x n r =
+    match n with
+    | 0 -> r
+    | _ -> aux x (n - 1) (r * x)
+  in
+  aux x y 1
+end
 
 module M =
 
@@ -92,4 +100,6 @@ end
 print $ 1 + x * x + 1;
 
 List.count l 0 |> print;
+
+print $ 2 ** 8;
 

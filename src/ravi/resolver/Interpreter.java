@@ -7,8 +7,8 @@ import ravi.model.Value;
 import ravi.analysis.ast.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class Interpreter {
@@ -105,7 +105,7 @@ public final class Interpreter {
             return Value.application(new Func(lambda.parameters()
                     .declarations()
                     .stream()
-                    .map(Identifier.Lowercase::name)
+                    .map(Nameable::stringOf)
                     .toList(), lambda.expression(), environment));
         }
 
@@ -155,8 +155,7 @@ public final class Interpreter {
 
         if (expression instanceof Expression.Application application) {
             if (evaluate(application.expr()) instanceof Value.VApplication vApplication) {
-                return applyValueApplication(vApplication, application
-                        .args()
+                return applyValueApplication(vApplication, application.args()
                         .stream()
                         .map(this::evaluate)
                         .toList());
@@ -297,21 +296,15 @@ public final class Interpreter {
         List<String> params = parameters
                 .declarations()
                 .stream()
-                .map(Identifier.Lowercase::name)
+                .map(Nameable::stringOf)
                 .toList();
-        Expression r = result;
 
         if (parameters.declarations().isEmpty()) {
-            env.define(name, evaluate(r, env));
+            env.define(name, evaluate(result, env));
             return;
         }
 
-        //if (result instanceof Expression.Application application) {
-        // r = application.expr();
-        // params = Stream.concat(params.stream(), application.args().stream().map()).toList();
-        //}
-
-        env.define(name, new Value.VApplication(new Func(params, r, env)));
+        env.define(name, new Value.VApplication(new Func(params, result, env)));
     }
 
 }
