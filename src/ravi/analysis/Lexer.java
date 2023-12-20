@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 import static ravi.analysis.Syntax.Symbol;
 import static ravi.analysis.Syntax.isOperator;
 
-public class Lexer {
+public final class Lexer {
 
     static boolean hadError = false;
     private String source;

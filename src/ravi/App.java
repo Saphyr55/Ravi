@@ -13,10 +13,12 @@ Réalisé par :
 
 package ravi;
 
+import ravi.analysis.ast.*;
 import ravi.core.NativeDeclaration;
 import ravi.infer.Context;
 import ravi.infer.Inference;
 import ravi.infer.Scheme;
+import ravi.infer.Type;
 import ravi.model.Application;
 import ravi.model.Value;
 import ravi.resolver.Environment;
@@ -25,7 +27,6 @@ import ravi.resolver.Interpreter;
 import ravi.resolver.ScopeResolver;
 import ravi.analysis.Lexer;
 import ravi.analysis.Parser;
-import ravi.analysis.ast.Program;
 import ravi.analysis.Token;
 
 import javax.swing.*;
@@ -52,19 +53,34 @@ public class App implements ActionListener {
 
     public static void main(String[] args) throws IOException {
 
-        String source = Files.readString(Path.of("ravi/InferTest.ravi"), StandardCharsets.UTF_8);
+        String source =
+                Files.readString(
+                    Path.of("ravi/InferTest.ravi"),
+                    StandardCharsets.UTF_8
+                );
 
         Lexer lexer = new Lexer();
         Parser parser = new Parser();
         Interpreter interpreter = new Interpreter(context());
         Inference inference = new Inference();
 
-        ScopeResolver scopeResolver = new ScopeResolver(interpreter);
+        // var a = new Expression.ValueNameExpr(new Nameable.ValueName.NName(new Identifier.Lowercase("a")));
+        // var b = new Expression.ValueNameExpr(new Nameable.ValueName.NName(new Identifier.Lowercase("b")));
+        // var c = new Expression.ValueNameExpr(new Nameable.ValueName.NName(new Identifier.Lowercase("d")));
+        // var f = new Expression.ValueNameExpr(new Nameable.ValueName.NName(new Identifier.Lowercase("f")));
+        // var e =  new Expression.Application(f, List.of(a, b, c));
+//
+        // System.out.println(e);
+        // System.out.println("------------------------------------");
+        // e = inference.compress(e);
+        // System.out.println(e);
 
+        ScopeResolver scopeResolver = new ScopeResolver(interpreter);
         List<Token> tokens = lexer.scan(source);
         Program program = parser.program(tokens);
 
-        inference.infer(new Context(), program);
+        var context = inference.infer(new Context(), program);
+        System.out.println(context);
 
         scopeResolver.resolve(program);
         interpreter.interpretProgram(program);

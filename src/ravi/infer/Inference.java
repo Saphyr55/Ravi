@@ -3,91 +3,78 @@ package ravi.infer;
 import ravi.analysis.ast.*;
 import ravi.core.Core;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public final class Inference {
 
-    Map.Entry<Substitution, Type> infer(Context context, Expression expression) {
+    private Integer freshVarCounter = 0;
 
-        if (expression instanceof Expression.ValueNameExpr expr) {
+    record Couple(Substitution s, Type t) { }
+
+    public Couple infer(Context context, Expression expression) {
+
+        if (expression instanceof Expression.IdentExpr expr) {
             String varName = Nameable.stringOf(expr.valueName());
             if (context.env().containsKey(varName)) {
-                Scheme content = context.env().get(varName);
-                Type type = instantiate(content);
-                return Map.entry(Substitution.empty(), type);
+                Scheme scheme = context.env().get(varName);
+                return new Couple(Substitution.empty(), instantiate(scheme));
             }
             throw new InferException("unbound variable: %s".formatted(varName));
         }
 
-        if (expression instanceof Expression.LetIn expr) {
-            var name = Nameable.stringOf(expr.valueName());
-            var ts = infer(context, expr.expr());
-            var ctx2 = inferParameters(context, expr.parameters());
-            var ctx3 = inferLet(ctx2, name, ts);
-            var ts2 = infer(ctx3.apply(ts.getKey()), expr.result());
-            return Map.entry(ts.getKey().compose(ts2.getKey()), ts.getValue());
-        }
-
         if (expression instanceof Expression.Application application) {
 
-            var infer1 =
-                    application
-                    .args().stream()
-                    .map(e -> infer(context, e))
-                    .toList();
+            var app = compress(application);
+            var e1 = app.expr();
+            var e2 = app.args().get(0);
 
-            var s1 =
-                    infer1.stream()
-                    .map(Map.Entry::getKey)
-                    .reduce(Substitution::compose)
-                    .orElse(Substitution.empty());
+            var st0 = infer(context, e1);
+            var s0 = st0.s;
+            var t0 = st0.t;
 
-            var t1 =
-                    infer1.stream()
-                    .map(Map.Entry::getValue)
-                    .toList();
+            var st1 = infer(context.apply(s0), e2);
+            var s1 = st1.s;
+            var t1 = st1.t;
 
-            var infer2 = infer(context.apply(s1), application.expr());
+            var tauP = fresh();
+            var s2 = unify(t0.apply(s1), new Type.TFunc(List.of(t1), tauP));
 
-            var type = new Type.TFunc(infer2.getValue(), t1);
-
-            var s3 = mgu(infer2.getValue(), type);
-
-            var sub = s3.compose(infer2.getKey()).compose(s1);
-
-            return Map.entry(sub, type);
+            return new Couple(s2.compose(s1).compose(s0), tauP.apply(s2));
         }
 
         if (expression instanceof Expression.Lambda lambda) {
 
-            List<Nameable.LabelName> decl = lambda
-                    .parameters()
-                    .declarations();
+            var lambdaP = compress(lambda);
+            var param = lambdaP.parameters().declarations().get(0);
+            var varParam = Nameable.stringOf(param);
 
-            List<Type> typesVar = decl.stream()
-                    .map(Nameable::stringOf)
-                    .map(this::newTyVar)
-                    .toList();
+            var tau = fresh();
+            var scheme = dontGeneralize(context, tau);
+            var contextP = context.union(Map.of(varParam, scheme));
+            var st = infer(contextP, lambdaP.expression());
 
-            Context gammaPP = inferParameters(context, lambda.parameters());
+            return new Couple(st.s, new Type.TFunc(List.of(tau.apply(st.s)), st.t));
+        }
 
-            Map.Entry<Substitution, Type> inferE = infer(gammaPP, lambda.expression());
+        if (expression instanceof Expression.LetIn expr) {
+            // Example : let f x y = e  become  let f = fun x -> fun y -> e
+            var in = compress(expr);
+            var name = Nameable.stringOf(in.valueName());
 
-            var types = Typing.ListTyping
-                    .of(typesVar.stream())
-                    .apply(inferE.getKey())
-                    .toList();
+            var ts = infer(context, in.expr());
+            var s1 = ts.s;
+            var varType = ts.t;
 
-            return Map.entry(inferE.getKey(), new Type.TFunc(inferE.getValue(), types));
+            var scheme = generalize(context, varType);
+            var contextP = context.union(Map.of(name, scheme));
+            var ts2 = infer(contextP, in.expr());
+
+            return new Couple(s1.compose(ts2.s), ts2.t);
         }
 
         if (expression instanceof Expression.ConstantExpr expr) {
-            return constant(expr.constant());
+            return infer(expr.constant());
         }
 
         if (expression instanceof Expression.ParenthesisExpr expr) {
@@ -98,66 +85,37 @@ public final class Inference {
             return infer(context, expr.expr());
         }
 
+        if (expression instanceof Expression.UnitExpr) {
+            return new Couple(Substitution.empty(), new Type.TUnit());
+        }
+
         throw new RuntimeException("Missing Implementation");
     }
 
-    private Context inferLet(Context context, String name, Map.Entry<Substitution, Type> ts) {
-        var ctx1 = context.remove(name);
-        var tP = generalize(context.apply(ts.getKey()), ts.getValue());
-        var env = new HashMap<>(ctx1.env());
-        env.put(name, tP);
-        return new Context(env);
+    private Scheme dontGeneralize(Context context, Type tau) {
+        return new Scheme(List.of(), tau);
     }
 
-    private Context inferParameters(Context context, Parameters parameters) {
-
-        List<String> names = parameters
-                .declarations()
-                .stream()
-                .map(Nameable::stringOf)
-                .toList();
-
-        Context gammaP = context.removeAll(names);
-
-        List<Type> typesVar = parameters
-                .declarations()
-                .stream()
-                .map(Nameable::stringOf)
-                .map(this::newTyVar)
-                .toList();
-
-        Map<String, Scheme> envPP =
-                IntStream.range(0, parameters.declarations().size())
-                        .boxed()
-                        .collect(Collectors.toMap(names::get,
-                                i -> new Scheme(List.of(), typesVar.get(i))));
-
-        var e = gammaP.union(envPP);
-        return  e;
+    public Type fresh() {
+        return new Type.TVar("α" + freshVarCounter++);
     }
 
-    Type newTyVar(String prefix) {
-        return new Type.TVar(prefix);
-    }
-
-    Type instantiate(Scheme scheme) {
-
-        var nVars = scheme
-                .forall()
-                .stream()
-                .map(this::newTyVar)
+    public Type instantiate(Scheme scheme) {
+        var nVars = scheme.forall().stream()
+                .map(s -> fresh())
                 .collect(Collectors.toList());
 
-        return scheme.type().apply(new Substitution(Core.zipToMap(scheme.forall(), nVars)));
+        var newSub = new Substitution(Core.zipToMap(scheme.forall(), nVars));
+        return scheme.type().apply(newSub);
     }
 
-    Scheme generalize(Context context, Type type) {
+    public Scheme generalize(Context context, Type type) {
         var set = new HashSet<>(type.ftv());
         set.removeAll(context.ftv());
         return new Scheme(set.stream().toList(), type);
     }
 
-    Substitution varBind(String name, Type type) {
+    public Substitution varBind(String name, Type type) {
 
         if (type instanceof Type.TVar)
             return Substitution.empty();
@@ -168,15 +126,11 @@ public final class Inference {
         return new Substitution(Map.of(name, type));
     }
 
-    Substitution mgu(Type t1, Type t2) {
+    public Substitution unify(Type t1, Type t2) {
 
         if (t1 instanceof Type.TFunc f1 && t2 instanceof Type.TFunc f2) {
-            var s1 = mgu(f1.expr(), f2.expr());
-            var s2 = Substitution.empty();
-
-            for (var p : f2.params())
-                s2 = s2.compose(mgu(f1.expr().apply(s1), p.apply(s1)));
-
+            var s1 = unify(f1.expr(), f2.expr());
+            var s2 = unify(f1.params().get(0), f2.params().get(0));
             return s1.compose(s2);
         }
 
@@ -196,27 +150,31 @@ public final class Inference {
             return Substitution.empty();
         }
 
+        if (t1 instanceof Type.TUnit && t2 instanceof Type.TUnit) {
+            return Substitution.empty();
+        }
+
         throw new RuntimeException("types do not unify: " + t1 + " vs. " + t2);
     }
 
-    Map.Entry<Substitution, Type> constant(Constant constant) {
+    public Couple infer(Constant constant) {
         if (constant instanceof Constant.CFloat) {
-            return Map.entry(Substitution.empty(), new Type.TFloat());
+            return new Couple(Substitution.empty(), new Type.TFloat());
         }
         if (constant instanceof Constant.CInt) {
-            return Map.entry(Substitution.empty(), new Type.TInt());
+            return new Couple(Substitution.empty(), new Type.TInt());
         }
         if (constant instanceof Constant.CString) {
-            return Map.entry(Substitution.empty(), new Type.TString());
+            return new Couple(Substitution.empty(), new Type.TString());
         }
         if (constant instanceof Constant.CText) {
-            return Map.entry(Substitution.empty(), new Type.TString());
+            return new Couple(Substitution.empty(), new Type.TString());
         }
         if (constant instanceof Constant.CUnit) {
-            return Map.entry(Substitution.empty(), new Type.TUnit());
+            return new Couple(Substitution.empty(), new Type.TUnit());
         }
         if (constant instanceof Constant.CEmptyList) {
-            return Map.entry(Substitution.empty(), new Type.TList());
+            return new Couple(Substitution.empty(), new Type.TList());
         }
         throw new RuntimeException("Missing Implementation");
     }
@@ -228,15 +186,13 @@ public final class Inference {
         return c;
     }
 
-    private Context infer(Context context, Statement statement) {
+    public Context infer(Context context, Statement statement) {
 
         if (statement instanceof Statement.Instr instr) {
-            Context c = context;
             for (var expression : instr.expression()) {
-                var ts = infer(c, expression);
-                c = c.apply(ts.getKey());
+                infer(context, expression);
             }
-            return c;
+            return context;
         }
 
         if (statement instanceof Statement.Module module) {
@@ -244,25 +200,71 @@ public final class Inference {
         }
 
         if (statement instanceof Statement.Let let) {
-            var c = inferLet(context, Nameable.stringOf(let.name()), let.parameters(), let.result());
-            System.out.println(c);
-            return c;
+            // Example : let f x y = e  become  let f = fun x -> fun y -> e
+
+            var letP = compress(let);
+            var name = Nameable.stringOf(letP.name());
+
+            var ts = infer(context, letP.expr());
+            var tau = ts.t;
+            var s0 = ts.s;
+
+            var scheme = generalize(context, tau.apply(s0));
+
+            return context.union(Map.of(name, scheme));
         }
 
         throw new RuntimeException("Missing Implementation");
     }
 
-    private Context inferLet(Context context, String name, Parameters parameters, Expression expression) {
-        var ts = infer(context, expression);
-        var a = inferLet(context, name, ts);
-        var c = inferParameters(a, parameters);
-        return c;
+    public Context infer(Context context, ModuleContent content) {
+        if (content == null) return new Context();
+        var ctx = infer(context, content.let());
+        return infer(ctx, content.restContent());
     }
 
-    private Context infer(Context context, ModuleContent content) {
-        if (content == null) return new Context();
-        infer(context, content.let());
-        return infer(context, content.restContent());
+    public Expression.Application compress(Expression.Application application) {
+        var dcl = application.args();
+        if (application.args().size() > 1) {
+            var sub = dcl.subList(1, dcl.size());
+            var arg = dcl.get(0);
+            var lIn = new Expression.Application(application.expr(), Collections.singletonList(arg));
+            return compress(new Expression.Application(lIn, sub));
+        }
+        return application;
     }
+
+    public Expression.Lambda compress(Expression.Lambda lambda) {
+        var dcl = lambda.parameters().declarations();
+        if (dcl.size() > 1) {
+            var sub = dcl.subList(0, dcl.size() - 1);
+            var param = dcl.get(dcl.size() - 1);
+            var lIn = new Expression.Lambda(new Parameters(Collections.singletonList(param)), lambda.expression());
+            return compress(new Expression.Lambda(new Parameters(sub), lIn));
+        }
+        return lambda;
+    }
+
+    public Expression.LetIn compress(Expression.LetIn in) {
+        var dcl = in.parameters().declarations();
+        if (dcl.size() >= 1) {
+            var lambda = new Expression.Lambda(new Parameters(dcl), in.expr());
+            var nIn = new Expression.LetIn(in.valueName(), new Parameters(List.of()), compress(lambda), in.result());
+            return compress(nIn);
+        }
+        return in;
+    }
+
+    public Statement.Let compress(Statement.Let let) {
+        var dcl = let.parameters().declarations();
+        if (dcl.size() >= 1) {
+            var lambda = new Expression.Lambda(new Parameters(dcl), let.expr());
+            var letP = new Statement.Let(let.name(), new Parameters(List.of()), compress(lambda));
+            return compress(letP);
+        }
+        return let;
+    }
+
+
 
 }

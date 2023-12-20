@@ -24,4 +24,10 @@ public record Scheme(List<String> forall, Type type) implements Typing<Scheme> {
         return new Scheme(vars, type.apply(new Substitution(st)));
     }
 
+    @Override
+    public String toString() {
+        return forall.isEmpty() ? type.toStr() : "forall " + String.join(" ", forall) + ". " + type.toStr();
+    }
+
+
 }

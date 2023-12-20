@@ -1,6 +1,6 @@
 package ravi.analysis;
 
-public class TextParsing {
+public final class TextParsing {
 
     public static String parse(String text) {
         text = text.strip();

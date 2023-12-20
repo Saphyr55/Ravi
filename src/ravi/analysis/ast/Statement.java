@@ -5,7 +5,7 @@ import java.util.List;
 
 public sealed interface Statement {
 
-    record Let(Nameable.ValueName name, Parameters parameters, Expression result) implements Statement { }
+    record Let(Nameable.ValueName name, Parameters parameters, Expression expr) implements Statement { }
 
     record Instr(List<Expression> expression) implements Statement { }
 

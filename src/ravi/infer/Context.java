@@ -25,10 +25,6 @@ public record Context(Map<String, Scheme> env) implements Typing<Context> {
         return new Context(m);
     }
 
-    public Context union(Context context) {
-        return union(context.env);
-    }
-
     public Context union(Map<String, Scheme> env) {
         var m = new HashMap<>(this.env);
         m.putAll(env);
@@ -37,7 +33,7 @@ public record Context(Map<String, Scheme> env) implements Typing<Context> {
 
     @Override
     public Set<String> ftv() {
-        return Typing.ListTyping.of(env.values().stream()).ftv();
+        return env.values().stream().flatMap(scheme -> scheme.type().ftv().stream()).collect(Collectors.toUnmodifiableSet());
     }
 
     @Override
@@ -47,18 +43,9 @@ public record Context(Map<String, Scheme> env) implements Typing<Context> {
         return new Context(env);
     }
 
-    Scheme generalize(Type t) {
-
-        Set<String> ftvT = t.ftv();
-        Set<String> ftvEnv = Set.copyOf(env.keySet());
-
-        // Set difference: ftv t \ ftv env
-        Set<String> vars = ftvT.stream()
-                .filter(variable -> !ftvEnv.contains(variable))
-                .collect(Collectors.toSet());
-
-        // Construct Scheme with the list of variables
-        return new Scheme(List.copyOf(vars), t);
+    @Override
+    public String toString() {
+        return String.join("\n", env.entrySet().stream().map(e ->
+                "val " + e.getKey() + " : " + e.getValue()).toList());
     }
-
 }

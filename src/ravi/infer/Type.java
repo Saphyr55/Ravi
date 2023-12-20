@@ -1,9 +1,9 @@
 package ravi.infer;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public sealed interface Type extends Typing<Type> {
 
@@ -11,7 +11,7 @@ public sealed interface Type extends Typing<Type> {
 
     record TList() implements Type { }
 
-    record TFunc(Type expr, List<Type> params) implements Type { }
+    record TFunc(List<Type> params, Type expr) implements Type { }
 
     record TInt() implements Type { }
 
@@ -36,24 +36,60 @@ public sealed interface Type extends Typing<Type> {
             return Set.of();
         }
         if (this instanceof TFunc f) {
-            return Stream
-                    .concat(f.expr.ftv().stream(), Typing.ListTyping.of(f.params.stream()).ftv().stream())
-                    .collect(Collectors.toUnmodifiableSet());
+            var x = new HashSet<>(f.expr.ftv());
+            x.addAll(f.params.get(0).ftv());
+            return x;
         }
         throw new RuntimeException("Missing implementation of Type.");
     }
 
     @Override
     default Type apply(Substitution s) {
+
         if (this instanceof TVar var) {
             return s.types().getOrDefault(var.name, new TVar(var.name));
         }
+
         if (this instanceof TFunc func) {
-            return new TFunc(func.expr.apply(s), Typing.ListTyping.of(func.params.stream()).apply(s).toList());
+            var param = func.params.get(0).apply(s);
+            var expr = func.expr.apply(s);
+            return new TFunc(Collections.singletonList(param), expr);
         }
+
         return this;
     }
 
+    default String toStr() {
 
+        if (this instanceof TUnit) {
+            return "Unit";
+        }
+
+        if (this instanceof TFloat) {
+            return "Float";
+        }
+
+        if (this instanceof TInt) {
+            return "Int";
+        }
+
+        if (this instanceof TVar var) {
+            return var.name;
+        }
+
+        if (this instanceof TFunc t) {
+            return "( "
+                    + String.join(" -> ", t.params.stream().map(Type::toStr).toList())
+                    + " -> "
+                    + t.expr.toStr()
+                    + " )";
+        }
+
+        if (this instanceof TList) {
+            return "[]";
+        }
+
+        throw new RuntimeException("Missing implementation of type");
+    }
 
 }

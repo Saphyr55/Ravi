@@ -27,7 +27,7 @@ public final class ScopeResolver {
         if (statement instanceof Statement.Let let) {
             declare(Nameable.stringOf(let.name()));
             define(Nameable.stringOf(let.name()));
-            resolveLet(let.parameters(), let.result());
+            resolveLet(let.parameters(), let.expr());
             return;
         }
         if (statement instanceof Statement.Instr instr) {
@@ -42,7 +42,7 @@ public final class ScopeResolver {
 
     private void resolve(ModuleContent content) {
         if (content == null) return;
-        resolveLet(content.let().parameters(), content.let().result());
+        resolveLet(content.let().parameters(), content.let().expr());
         resolve(content.restContent());
     }
 

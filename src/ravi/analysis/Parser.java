@@ -4,7 +4,7 @@ import ravi.analysis.ast.*;
 
 import java.util.*;
 
-public class Parser {
+public final class Parser {
 
     private List<Token> tokens;
     private int position;
@@ -294,7 +294,7 @@ public class Parser {
      */
     private Expression valueNameExpr() {
         Nameable.ValueName labelName = valueName("We need a label name.");
-        return new Expression.ValueNameExpr(labelName);
+        return new Expression.IdentExpr(labelName);
     }
 
     /**
@@ -324,7 +324,7 @@ public class Parser {
         while (check(Kind.Pipe)) {
             consume(Kind.Pipe, "");
             patterns.add(pattern());
-            consume(Kind.Arrow, "We need the '->' to result an expression.");
+            consume(Kind.Arrow, "We need the '->' to expr an expression.");
             expressions.add(expression());
         }
         return new Expression.PatternMatching(expression, patterns, expressions);
@@ -391,7 +391,7 @@ public class Parser {
             var operator = valueNameOp();
             if (operator == null) throw new RuntimeException("'()' is not an operator.");
             consume(Kind.CloseParenthesis, "We need a ')' symbol.");
-            return new Expression.ValueNameExpr(operator);
+            return new Expression.IdentExpr(operator);
         }
         Expression expression = expression();
         consume(Kind.CloseParenthesis, "We need a ')' symbol.");

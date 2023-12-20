@@ -7,7 +7,6 @@ import ravi.model.Value;
 import ravi.analysis.ast.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -26,11 +25,11 @@ public final class Interpreter {
         }
     }
 
-    void interpretInstruction(Statement statement) {
+    public void interpretInstruction(Statement statement) {
 
         if (statement instanceof Statement.Let let) {
             String name = Nameable.stringOf(let.name());
-            defineFunction(environment, name, let.parameters(), let.result());
+            defineFunction(environment, name, let.parameters(), let.expr());
         }
 
         else if (statement instanceof Statement.Module module) {
@@ -49,7 +48,7 @@ public final class Interpreter {
     void interpretModuleContent(Environment environment, ModuleContent content) {
         if (content == null) return;
         Statement.Let let = content.let();
-        defineFunction(environment, Nameable.stringOf(let.name()), let.parameters(), let.result());
+        defineFunction(environment, Nameable.stringOf(let.name()), let.parameters(), let.expr());
         interpretModuleContent(environment, content.restContent());
     }
 
@@ -136,7 +135,7 @@ public final class Interpreter {
             return evaluate(expr.expr());
         }
 
-        if (expression instanceof Expression.ValueNameExpr expr) {
+        if (expression instanceof Expression.IdentExpr expr) {
             return lookUpDeclaration(Nameable.stringOf(expr.valueName()));
         }
 

@@ -18,7 +18,7 @@ public final class Reducer {
 
     Statement statement(Statement statement) {
         if (statement instanceof Statement.Let let) {
-            return new Statement.Let(let.name(), let.parameters(), expression(let.result()));
+            return new Statement.Let(let.name(), let.parameters(), expression(let.expr()));
         }
         return statement;
     }

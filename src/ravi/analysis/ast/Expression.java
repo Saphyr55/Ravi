@@ -4,7 +4,7 @@ import java.util.List;
 
 public sealed interface Expression {
 
-record UnitExpr() implements Expression { }
+    record UnitExpr() implements Expression { }
 
     record Application(Expression expr, List<Expression> args) implements Expression { }
 
@@ -33,7 +33,7 @@ record UnitExpr() implements Expression { }
 
     record ModuleCallExpr(Nameable.ModuleName moduleName, Nameable.ValueName valueName) implements Expression { }
 
-    record ValueNameExpr(Nameable.ValueName valueName) implements Expression { }
+    record IdentExpr(Nameable.ValueName valueName) implements Expression { }
 
     record Unary(Operator operator, Expression right) implements Expression { }
 
