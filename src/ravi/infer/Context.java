@@ -33,7 +33,11 @@ public record Context(Map<String, Scheme> env) implements Typing<Context> {
 
     @Override
     public Set<String> ftv() {
-        return env.values().stream().flatMap(scheme -> scheme.type().ftv().stream()).collect(Collectors.toUnmodifiableSet());
+        return env
+                .values()
+                .stream()
+                .flatMap(scheme -> scheme.type().ftv().stream())
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     @Override

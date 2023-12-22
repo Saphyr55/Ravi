@@ -29,7 +29,7 @@ public sealed interface Expression {
                            List<Expression> expressions)
             implements Expression { }
 
-    record Lambda(Parameters parameters, Expression expression) implements Expression { }
+    record Lambda(Parameters parameters, Expression expr) implements Expression { }
 
     record ModuleCallExpr(Nameable.ModuleName moduleName, Nameable.ValueName valueName) implements Expression { }
 

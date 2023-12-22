@@ -218,7 +218,7 @@ public final class Parser {
      * Expr -> Expr Expr'<br>
      * Expr' -> InfixOp Expr | :: Expr | epsilon
      *
-     * @return expression
+     * @return expr
      */
     private Expression application() {
 
@@ -258,7 +258,7 @@ public final class Parser {
     /**
      * Expr -> Constant
      *
-     * @return expression
+     * @return expr
      */
     private Expression floatExpr() {
         return new Expression.ConstantExpr(cFloat());
@@ -267,7 +267,7 @@ public final class Parser {
     /**
      * Expr -> Constant
      *
-     * @return expression
+     * @return expr
      */
     private Expression integerExpr() {
         return new Expression.ConstantExpr(integer());
@@ -276,7 +276,7 @@ public final class Parser {
     /**
      * Expr -> ModuleName . ValueName
      *
-     * @return expression
+     * @return expr
      */
     private Expression moduleCallExpr() {
 
@@ -290,7 +290,7 @@ public final class Parser {
     /**
      * Expr -> ValueName
      *
-     * @return expression
+     * @return expr
      */
     private Expression valueNameExpr() {
         Nameable.ValueName labelName = valueName("We need a label name.");
@@ -300,12 +300,12 @@ public final class Parser {
     /**
      * Expr -> fun Parameters -> Expr
      *
-     * @return expression
+     * @return expr
      */
     private Expression lambdaExpr() {
         consume(Kind.FunKw, "We need the 'fun' keyword to declare a lambda");
         Parameters parameters = parameters();
-        consume(Kind.Arrow, "We need the '->' symbol to specifies an expression for the lambda.");
+        consume(Kind.Arrow, "We need the '->' symbol to specifies an expr for the lambda.");
         Expression expression = expression();
         return new Expression.Lambda(parameters, expression);
     }
@@ -313,18 +313,18 @@ public final class Parser {
     /**
      * Expr -> match Expr with Pattern
      *
-     * @return expression
+     * @return expr
      */
     private Expression patternMatching() {
         consume(Kind.MatchKw, "We need the keyword 'match' to declare a pattern matching.");
         Expression expression = expression();
-        consume(Kind.WithKw, "We need the keyword 'with' after an expression.");
+        consume(Kind.WithKw, "We need the keyword 'with' after an expr.");
         List<Pattern> patterns = new ArrayList<>();
         List<Expression> expressions = new ArrayList<>();
         while (check(Kind.Pipe)) {
             consume(Kind.Pipe, "");
             patterns.add(pattern());
-            consume(Kind.Arrow, "We need the '->' to expr an expression.");
+            consume(Kind.Arrow, "We need the '->' to expr an expr.");
             expressions.add(expression());
         }
         return new Expression.PatternMatching(expression, patterns, expressions);
@@ -333,7 +333,7 @@ public final class Parser {
     /**
      * Expr -> Constant
      *
-     * @return expression
+     * @return expr
      */
     private Expression textExpr() {
         return new Expression.ConstantExpr(text());
@@ -342,7 +342,7 @@ public final class Parser {
     /**
      * Expr -> Constant
      *
-     * @return expression
+     * @return expr
      */
     private Expression stringExpr() {
         return new Expression.ConstantExpr(string());
@@ -351,7 +351,7 @@ public final class Parser {
     /**
      * Expr -> List
      *
-     * @return expression
+     * @return expr
      */
     private Expression listExpr() {
         consume(Kind.OpenSquareBracket, "We need a '[' symbol.");
@@ -383,7 +383,7 @@ public final class Parser {
     /**
      * Expr -> ( Expr )
      *
-     * @return expression
+     * @return expr
      */
     private Expression parenthesisExpr() {
         consume(Kind.OpenParenthesis, "We need a '(' symbol.");
@@ -402,7 +402,7 @@ public final class Parser {
     /**
      * Expr -> begin Expr end
      *
-     * @return expression
+     * @return expr
      */
     private Expression groupExpr() {
         consume(Kind.BeginKw, "We need the 'begin' keyword.");
@@ -414,7 +414,7 @@ public final class Parser {
     /**
      * Expr -> let ValueName Parameters = Expr in Expr
      *
-     * @return expression
+     * @return expr
      */
     private Expression letIn() {
 

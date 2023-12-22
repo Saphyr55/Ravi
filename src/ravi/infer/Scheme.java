@@ -12,15 +12,18 @@ public record Scheme(List<String> forall, Type type) implements Typing<Scheme> {
     @Override
     public Set<String> ftv() {
         Set<String> ftv = new HashSet<>(type.ftv());
-        forall.forEach(ftv::remove);
+        forall().forEach(ftv::remove);
         return ftv;
     }
 
     @Override
     public Scheme apply(Substitution s) {
-        var st = new HashMap<>(s.types());
         List<String> vars = new LinkedList<>(forall());
-        vars.forEach(st::remove);
+        var st = new HashMap<>(s.types());
+        for (int i = vars.size() - 1; i >= 0; i--) {
+            String varToRemove = vars.get(i);
+            st.remove(varToRemove);
+        }
         return new Scheme(vars, type.apply(new Substitution(st)));
     }
 

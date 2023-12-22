@@ -1,4 +1,7 @@
 
-let t g y =
-  g y 0
+let id x = x
 end
+
+let d = id 0
+end
+

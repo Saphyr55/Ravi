@@ -1,9 +1,12 @@
 package ravi.infer;
 
+import java.security.Key;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public sealed interface Type extends Typing<Type> {
 
@@ -35,10 +38,16 @@ public sealed interface Type extends Typing<Type> {
         if (this instanceof TString) {
             return Set.of();
         }
+        if (this instanceof TUnit) {
+            return Set.of();
+        }
         if (this instanceof TFunc f) {
-            var x = new HashSet<>(f.expr.ftv());
-            x.addAll(f.params.get(0).ftv());
-            return x;
+            return Stream
+                    .concat(f.params.get(0).ftv().stream(), f.expr.ftv().stream())
+                    .collect(Collectors.toUnmodifiableSet());
+        }
+        if (this instanceof TList) {
+            return Set.of();
         }
         throw new RuntimeException("Missing implementation of Type.");
     }
@@ -47,7 +56,10 @@ public sealed interface Type extends Typing<Type> {
     default Type apply(Substitution s) {
 
         if (this instanceof TVar var) {
-            return s.types().getOrDefault(var.name, new TVar(var.name));
+            if (s.types().containsKey(var.name)) {
+                return s.types().get(var.name).apply(s);
+            }
+            return var;
         }
 
         if (this instanceof TFunc func) {

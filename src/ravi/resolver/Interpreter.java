@@ -105,7 +105,7 @@ public final class Interpreter {
                     .declarations()
                     .stream()
                     .map(Nameable::stringOf)
-                    .toList(), lambda.expression(), environment));
+                    .toList(), lambda.expr(), environment));
         }
 
         if (expression instanceof Expression.UnitExpr) {

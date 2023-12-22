@@ -1,6 +1,6 @@
 package ravi.infer;
 
-public class InferException extends RuntimeException {
+public final class InferException extends RuntimeException {
 
     InferException() {
         super();

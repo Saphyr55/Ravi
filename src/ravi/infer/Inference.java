@@ -18,7 +18,8 @@ public final class Inference {
             String varName = Nameable.stringOf(expr.valueName());
             if (context.env().containsKey(varName)) {
                 Scheme scheme = context.env().get(varName);
-                return new Couple(Substitution.empty(), instantiate(scheme));
+                var type = instantiate(scheme);
+                return new Couple(Substitution.empty(), type);
             }
             throw new InferException("unbound variable: %s".formatted(varName));
         }
@@ -29,18 +30,25 @@ public final class Inference {
             var e1 = app.expr();
             var e2 = app.args().get(0);
 
-            var st0 = infer(context, e1);
-            var s0 = st0.s;
-            var t0 = st0.t;
+            var tauP = fresh("a");
 
-            var st1 = infer(context.apply(s0), e2);
+            var st1 = infer(context, e1);
             var s1 = st1.s;
             var t1 = st1.t;
 
-            var tauP = fresh();
-            var s2 = unify(t0.apply(s1), new Type.TFunc(List.of(t1), tauP));
+            var st2 = infer(context.apply(s1), e2);
+            var s2 = st2.s;
+            var t2 = st2.t;
 
-            return new Couple(s2.compose(s1).compose(s0), tauP.apply(s2));
+            var s3 = mgu(
+                    t1.apply(s2),
+                    new Type.TFunc(List.of(t2), tauP)
+            );
+
+            return new Couple(
+                    s3.compose(s2).compose(s1),
+                    tauP.apply(s3)
+            );
         }
 
         if (expression instanceof Expression.Lambda lambda) {
@@ -49,28 +57,37 @@ public final class Inference {
             var param = lambdaP.parameters().declarations().get(0);
             var varParam = Nameable.stringOf(param);
 
-            var tau = fresh();
-            var scheme = dontGeneralize(context, tau);
-            var contextP = context.union(Map.of(varParam, scheme));
-            var st = infer(contextP, lambdaP.expression());
+            var tau = fresh("a");
 
-            return new Couple(st.s, new Type.TFunc(List.of(tau.apply(st.s)), st.t));
+            var contextP = context.remove(varParam);
+            var contextPP = contextP.union(Map.of(varParam, dontGeneralize(tau)));
+            var st = infer(contextPP, lambdaP.expr());
+            var s1 = st.s;
+            var t1 = st.t;
+
+            return new Couple(s1, new Type.TFunc(List.of(tau.apply(s1)), t1));
         }
 
         if (expression instanceof Expression.LetIn expr) {
-            // Example : let f x y = e  become  let f = fun x -> fun y -> e
+
             var in = compress(expr);
             var name = Nameable.stringOf(in.valueName());
 
             var ts = infer(context, in.expr());
             var s1 = ts.s;
-            var varType = ts.t;
+            var t1 = ts.t;
 
-            var scheme = generalize(context, varType);
+            var scheme = generalize(context.apply(s1), t1);
             var contextP = context.union(Map.of(name, scheme));
-            var ts2 = infer(contextP, in.expr());
 
-            return new Couple(s1.compose(ts2.s), ts2.t);
+            System.out.println(contextP);
+            System.out.println("-------");
+
+            var ts2 = infer(contextP, in.result());
+            var t2 = ts2.t;
+            var s2 = ts2.s;
+
+            return new Couple(s1.compose(s2), t2);
         }
 
         if (expression instanceof Expression.ConstantExpr expr) {
@@ -92,27 +109,29 @@ public final class Inference {
         throw new RuntimeException("Missing Implementation");
     }
 
-    private Scheme dontGeneralize(Context context, Type tau) {
+    private Scheme dontGeneralize(Type tau) {
         return new Scheme(List.of(), tau);
     }
 
-    public Type fresh() {
-        return new Type.TVar("α" + freshVarCounter++);
+    public Type fresh(String prefix) {
+        return new Type.TVar(prefix + freshVarCounter++);
     }
 
     public Type instantiate(Scheme scheme) {
-        var nVars = scheme.forall().stream()
-                .map(s -> fresh())
+        var nVars = scheme
+                .forall()
+                .stream()
+                .map(this::fresh)
                 .collect(Collectors.toList());
-
-        var newSub = new Substitution(Core.zipToMap(scheme.forall(), nVars));
-        return scheme.type().apply(newSub);
+        var s = new Substitution(Core.zipToMap(scheme.forall(), nVars));
+        return scheme.type().apply(s);
     }
 
     public Scheme generalize(Context context, Type type) {
-        var set = new HashSet<>(type.ftv());
-        set.removeAll(context.ftv());
-        return new Scheme(set.stream().toList(), type);
+        var set = new LinkedList<>(type.ftv());
+        var ftv = context.ftv();
+        set.removeAll(ftv);
+        return new Scheme(set, type);
     }
 
     public Substitution varBind(String name, Type type) {
@@ -126,12 +145,12 @@ public final class Inference {
         return new Substitution(Map.of(name, type));
     }
 
-    public Substitution unify(Type t1, Type t2) {
+    public Substitution mgu(Type t1, Type t2) {
 
         if (t1 instanceof Type.TFunc f1 && t2 instanceof Type.TFunc f2) {
-            var s1 = unify(f1.expr(), f2.expr());
-            var s2 = unify(f1.params().get(0), f2.params().get(0));
-            return s1.compose(s2);
+            var s1 = mgu(f1.expr(), f2.expr());
+            var s2 = mgu(f1.params().get(0).apply(s1), f2.params().get(0).apply(s1));
+            return s2.compose(s1);
         }
 
         if (t1 instanceof Type.TVar var) {
@@ -188,10 +207,7 @@ public final class Inference {
 
     public Context infer(Context context, Statement statement) {
 
-        if (statement instanceof Statement.Instr instr) {
-            for (var expression : instr.expression()) {
-                infer(context, expression);
-            }
+        if (statement instanceof Statement.Instr) {
             return context;
         }
 
@@ -239,7 +255,7 @@ public final class Inference {
         if (dcl.size() > 1) {
             var sub = dcl.subList(0, dcl.size() - 1);
             var param = dcl.get(dcl.size() - 1);
-            var lIn = new Expression.Lambda(new Parameters(Collections.singletonList(param)), lambda.expression());
+            var lIn = new Expression.Lambda(new Parameters(Collections.singletonList(param)), lambda.expr());
             return compress(new Expression.Lambda(new Parameters(sub), lIn));
         }
         return lambda;

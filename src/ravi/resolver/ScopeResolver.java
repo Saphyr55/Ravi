@@ -62,7 +62,7 @@ public final class ScopeResolver {
         }
 
         if (expression instanceof Expression.Lambda lambda) {
-            resolve(lambda.expression());
+            resolve(lambda.expr());
         }
 
         if (expression instanceof Expression.Instr expr) {

@@ -60,9 +60,7 @@ public final class Lexer {
 
     private void addCommentOrParenthesis() {
         if (match(Symbol.Asterisk)) {
-            while (!isAtEnd() &&
-                    !peekStr().equals(Symbol.Asterisk) &&
-                    !peekStr().equals(Symbol.CloseParenthesis)) {
+            while (!isEndComment()) {
                 if (peek() == '\n') line++;
                 next();
             }
@@ -71,6 +69,14 @@ public final class Lexer {
         }
         addToken(Kind.OpenParenthesis);
     }
+
+    private boolean isEndComment() {
+        if (isAtEnd()) return false;
+        String assumeAsterisk = String.valueOf(source.charAt(position));
+        String assumeCloseParen = String.valueOf(source.charAt(position + 1));
+        return assumeAsterisk.equals(Symbol.Asterisk) && assumeCloseParen.equals(Symbol.CloseParenthesis);
+    }
+
 
     private void addDefaultToken(String c) {
         if (Syntax.isOperator(c)) {
