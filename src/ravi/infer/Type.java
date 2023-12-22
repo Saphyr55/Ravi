@@ -43,7 +43,8 @@ public sealed interface Type extends Typing<Type> {
         }
         if (this instanceof TFunc f) {
             return Stream
-                    .concat(f.params.get(0).ftv().stream(), f.expr.ftv().stream())
+                    .concat(f.params().stream().flatMap(type -> type.ftv().stream()),
+                            f.expr.ftv().stream())
                     .collect(Collectors.toUnmodifiableSet());
         }
         if (this instanceof TList) {
@@ -63,9 +64,9 @@ public sealed interface Type extends Typing<Type> {
         }
 
         if (this instanceof TFunc func) {
-            var param = func.params.get(0).apply(s);
+            var params = func.params.stream().map(t -> t.apply(s)).toList();
             var expr = func.expr.apply(s);
-            return new TFunc(Collections.singletonList(param), expr);
+            return new TFunc(params, expr);
         }
 
         return this;

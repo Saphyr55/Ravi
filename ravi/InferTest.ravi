@@ -3,8 +3,11 @@ let id x = x
 end
 
 (* val d : ( ('a -> 'a) -> Int -> 'b ) -> 'b *)
-let d g = g id 0
+let d g f = f id 0
 end
 
+(* val d : ( ('a -> 'a) -> Int -> 'b ) -> 'b *)
+let d2 g f = (f id) 0
+end
 
 

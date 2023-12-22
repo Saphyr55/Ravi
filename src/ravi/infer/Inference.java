@@ -26,23 +26,27 @@ public final class Inference {
 
         if (expression instanceof Expression.Application application) {
 
-            var app = compress(application);
-            var e1 = app.expr();
-            var e2 = app.args().get(0);
-
-            var tauP = fresh("a");
+            var e1 = application.expr();
+            var e2 = application.args();
 
             var st1 = infer(context, e1);
             var s1 = st1.s;
             var t1 = st1.t;
 
-            var st2 = infer(context.apply(s1), e2);
-            var s2 = st2.s;
-            var t2 = st2.t;
+            var lst2 = e2.stream().map(e -> infer(context.apply(s1), e)).toList();
+            var lt2 = lst2.stream()
+                    .map(Couple::t).toList();
+
+            var s2 = lst2.stream()
+                    .map(Couple::s)
+                    .reduce(Substitution::compose)
+                    .orElse(Substitution.empty());
+
+            var tauP = fresh("a");
 
             var s3 = mgu(
                     t1.apply(s2),
-                    new Type.TFunc(List.of(t2), tauP)
+                    new Type.TFunc(lt2, tauP)
             );
 
             return new Couple(
@@ -143,7 +147,13 @@ public final class Inference {
 
         if (t1 instanceof Type.TFunc f1 && t2 instanceof Type.TFunc f2) {
             var s1 = mgu(f1.expr(), f2.expr());
-            var s2 = mgu(f1.params().get(0).apply(s1), f2.params().get(0).apply(s1));
+            var s2 = Substitution.empty();
+            for (int i = 0; i < f1.params().size(); i++) {
+                s2 = s2.compose(mgu(
+                        f1.params().get(i).apply(s1),
+                        f2.params().get(i).apply(s1))
+                );
+            }
             return s2.compose(s1);
         }
 
@@ -233,17 +243,6 @@ public final class Inference {
         return infer(ctx, content.restContent());
     }
 
-    public Expression.Application compress(Expression.Application application) {
-        var dcl = application.args();
-        if (application.args().size() > 1) {
-            var sub = dcl.subList(1, dcl.size());
-            var arg = dcl.get(0);
-            var lIn = new Expression.Application(application.expr(), Collections.singletonList(arg));
-            return compress(new Expression.Application(lIn, sub));
-        }
-        return application;
-    }
-
     public Expression.Lambda compress(Expression.Lambda lambda) {
         var dcl = lambda.parameters().declarations();
         if (dcl.size() > 1) {
@@ -259,7 +258,7 @@ public final class Inference {
         var dcl = in.parameters().declarations();
         if (!dcl.isEmpty()) {
             var lambda = new Expression.Lambda(new Parameters(dcl), in.expr());
-            var nIn = new Expression.LetIn(in.valueName(), new Parameters(List.of()), compress(lambda), in.result());
+            var nIn = new Expression.LetIn(in.valueName(), new Parameters(List.of()), lambda, in.result());
             return compress(nIn);
         }
         return in;
@@ -269,7 +268,7 @@ public final class Inference {
         var dcl = let.parameters().declarations();
         if (!dcl.isEmpty()) {
             var lambda = new Expression.Lambda(new Parameters(dcl), let.expr());
-            var letP = new Statement.Let(let.name(), new Parameters(List.of()), compress(lambda));
+            var letP = new Statement.Let(let.name(), new Parameters(List.of()), lambda);
             return compress(letP);
         }
         return let;

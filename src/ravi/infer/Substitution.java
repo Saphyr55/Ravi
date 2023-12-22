@@ -20,7 +20,7 @@ public record Substitution(Map<String, Type> types) {
     Substitution compose(Substitution s) {
         var ts = new HashMap<>(types);
         ts.putAll(s.types);
-        ts.forEach((s1, type) -> type.apply(this));
+
         return new Substitution(ts);
     }
 
