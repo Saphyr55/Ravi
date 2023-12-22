@@ -10,7 +10,7 @@ public final class Inference {
 
     private Integer freshVarCounter = 0;
 
-    record Couple(Substitution s, Type t) { }
+    private record Couple(Substitution s, Type t) { }
 
     public Couple infer(Context context, Expression expression) {
 
@@ -59,9 +59,9 @@ public final class Inference {
 
             var tau = fresh("a");
 
-            var contextP = context.remove(varParam);
-            var contextPP = contextP.union(Map.of(varParam, dontGeneralize(tau)));
-            var st = infer(contextPP, lambdaP.expr());
+            var contextP = context.union(Map.of(varParam, dontGeneralize(tau)));
+
+            var st = infer(contextP, lambdaP.expr());
             var s1 = st.s;
             var t1 = st.t;
 
@@ -80,14 +80,11 @@ public final class Inference {
             var scheme = generalize(context.apply(s1), t1);
             var contextP = context.union(Map.of(name, scheme));
 
-            System.out.println(contextP);
-            System.out.println("-------");
-
             var ts2 = infer(contextP, in.result());
             var t2 = ts2.t;
             var s2 = ts2.s;
 
-            return new Couple(s1.compose(s2), t2);
+            return new Couple(s2.compose(s1), t2);
         }
 
         if (expression instanceof Expression.ConstantExpr expr) {
@@ -121,23 +118,20 @@ public final class Inference {
         var nVars = scheme
                 .forall()
                 .stream()
-                .map(this::fresh)
+                .map(s -> fresh("a"))
                 .collect(Collectors.toList());
         var s = new Substitution(Core.zipToMap(scheme.forall(), nVars));
         return scheme.type().apply(s);
     }
 
     public Scheme generalize(Context context, Type type) {
-        var set = new LinkedList<>(type.ftv());
+        var typeFtv = new LinkedList<>(type.ftv());
         var ftv = context.ftv();
-        set.removeAll(ftv);
-        return new Scheme(set, type);
+        typeFtv.removeAll(ftv);
+        return new Scheme(typeFtv, type);
     }
 
     public Substitution varBind(String name, Type type) {
-
-        if (type instanceof Type.TVar)
-            return Substitution.empty();
 
         if (type.ftv().contains(name))
             throw new RuntimeException("occurs check fails: " + name + " vs. " + type);
@@ -263,7 +257,7 @@ public final class Inference {
 
     public Expression.LetIn compress(Expression.LetIn in) {
         var dcl = in.parameters().declarations();
-        if (dcl.size() >= 1) {
+        if (!dcl.isEmpty()) {
             var lambda = new Expression.Lambda(new Parameters(dcl), in.expr());
             var nIn = new Expression.LetIn(in.valueName(), new Parameters(List.of()), compress(lambda), in.result());
             return compress(nIn);
@@ -273,7 +267,7 @@ public final class Inference {
 
     public Statement.Let compress(Statement.Let let) {
         var dcl = let.parameters().declarations();
-        if (dcl.size() >= 1) {
+        if (!dcl.isEmpty()) {
             var lambda = new Expression.Lambda(new Parameters(dcl), let.expr());
             var letP = new Statement.Let(let.name(), new Parameters(List.of()), compress(lambda));
             return compress(letP);

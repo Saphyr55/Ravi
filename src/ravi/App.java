@@ -64,17 +64,6 @@ public class App implements ActionListener {
         Interpreter interpreter = new Interpreter(context());
         Inference inference = new Inference();
 
-        // var a = new Expression.ValueNameExpr(new Nameable.ValueName.NName(new Identifier.Lowercase("a")));
-        // var b = new Expression.ValueNameExpr(new Nameable.ValueName.NName(new Identifier.Lowercase("b")));
-        // var c = new Expression.ValueNameExpr(new Nameable.ValueName.NName(new Identifier.Lowercase("d")));
-        // var f = new Expression.ValueNameExpr(new Nameable.ValueName.NName(new Identifier.Lowercase("f")));
-        // var e =  new Expression.Application(f, List.of(a, b, c));
-//
-        // System.out.println(e);
-        // System.out.println("------------------------------------");
-        // e = inference.compress(e);
-        // System.out.println(e);
-
         ScopeResolver scopeResolver = new ScopeResolver(interpreter);
         List<Token> tokens = lexer.scan(source);
         Program program = parser.program(tokens);

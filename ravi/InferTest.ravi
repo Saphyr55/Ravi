@@ -2,6 +2,9 @@
 let id x = x
 end
 
-let d = id 0
+(* val d : ( ('a -> 'a) -> Int -> 'b ) -> 'b *)
+let d g = g id 0
 end
+
+
 
