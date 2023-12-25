@@ -4,7 +4,7 @@ import ravi.analysis.ast.Expression;
 import ravi.analysis.ast.Program;
 import ravi.analysis.ast.Statement;
 
-public final class Reducer {
+public final class Normalizer {
 
     public Program reduce(Program program) {
         return program(program);

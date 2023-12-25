@@ -51,7 +51,7 @@ public final class Environment {
             }
             environment = environment.enclosing;
         }
-        throw new InterpretException("Undefined variable '" + name + "' on get moduleName.");
+        throw new InterpretException("Undefined variable '" + name + "' on get name.");
     }
 
 }

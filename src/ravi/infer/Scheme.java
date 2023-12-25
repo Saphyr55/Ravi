@@ -21,8 +21,7 @@ public record Scheme(List<String> forall, Type type) implements Typing<Scheme> {
         List<String> vars = new LinkedList<>(forall());
         var st = new HashMap<>(s.types());
         for (int i = vars.size() - 1; i >= 0; i--) {
-            String varToRemove = vars.get(i);
-            st.remove(varToRemove);
+            st.remove(vars.get(i));
         }
         return new Scheme(vars, type.apply(new Substitution(st)));
     }

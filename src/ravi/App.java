@@ -55,21 +55,30 @@ public class App implements ActionListener {
 
         String source =
                 Files.readString(
-                    Path.of("ravi/InferTest.ravi"),
+                    Path.of("ravi/TypeTest.ravi"),
                     StandardCharsets.UTF_8
                 );
 
         Lexer lexer = new Lexer();
         Parser parser = new Parser();
         Interpreter interpreter = new Interpreter(context());
-        Inference inference = new Inference();
 
         ScopeResolver scopeResolver = new ScopeResolver(interpreter);
         List<Token> tokens = lexer.scan(source);
         Program program = parser.program(tokens);
 
-        var context = inference.infer(new Context(), program);
-        System.out.println(context);
+
+        Inference inference = new Inference();
+        // var context = inference.infer(new Context(Map.of(
+        //         "::", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TList(new Type.TVar("'a"))), new Type.TList(new Type.TVar("'a")))),
+        //         "print", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a")), new Type.TUnit())),
+        //         "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+        //         "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+        //         "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+        //         "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt()))
+        // )), program);
+
+       //System.out.println(context);
 
         scopeResolver.resolve(program);
         interpreter.interpretProgram(program);
@@ -91,24 +100,24 @@ public class App implements ActionListener {
     }
 
     static Environment context() {
-        Environment context = new Environment();
-        NativeDeclaration.genNative(context);
+        Environment env = new Environment();
+        NativeDeclaration.genNative(env);
 
-        context.define("location", Application.value(1, (inter, args) -> {
+        env.define("location", Application.value(1, (inter, args) -> {
             var lieux = new Lieu(args.get(0).toStr(), new ArrayList<>());
             LIEUX.add(lieux);
             return Value.object(lieux);
         }));
 
-        context.define("notImplLocation", new Value.VObject(new Lieu("", List.of())));
+        env.define("notImplLocation", new Value.VObject(new Lieu("", List.of())));
 
-        context.define("proposition", Application.value(2, (inter, args) -> {
+        env.define("proposition", Application.value(2, (inter, args) -> {
             var lieu = (Lieu) ((Value.VObject) args.get(0)).content();
             var description = args.get(1).toStr();
             return Value.object(new Proposition(description, LIEUX.indexOf(lieu)));
         }));
 
-        context.define("insert", Application.value(2, (inter, args) -> {
+        env.define("insert", Application.value(2, (inter, args) -> {
             if (((Value.VObject) args.get(0)).content() instanceof Lieu lieu) {
                 lieu.propositions.addAll(((Value.VList) args.get(1))
                         .values()
@@ -120,7 +129,7 @@ public class App implements ActionListener {
             throw new InterpretException("The function 'insert' take a 'Lieu' list as first parameter.");
         }));
 
-        return context;
+        return env;
     }
 
     // Nombre de lignes dans la zone de texte

@@ -16,6 +16,20 @@ ModuleContent' -> Let ModuleContent
 
 Let -> let ValueName Parameters = Expr end
 
+DeclType -> type TypeName = TypeExpr end
+
+TypeExpr -> Record | ADT
+
+Record -> { }
+
+ADT -> TypeName TypeInformation ADT'
+ADT' -> | TypeName TypeInformation
+
+TypeInformation -> of TypeInformation' | epsilon
+TypeInformation' -> TypeName TypeInformation''
+TypeInformation'' -> * TypeInformation'
+                   | epsilon
+
 Parameters -> LabelName Parameters'
 Parameters' -> Parameters
             | epsilon
@@ -35,10 +49,14 @@ Expr' -> Argument
         | :: Expr
 
 Pattern -> _
-        | Pattern :: Pattern
+        | Pattern :: Pattern // Removed. Reason : Inference rule doesn't work.
         | LabelName
-        | ( Pattern )
+        | ( Pattern TuplePattern )
         | Constant
+        | CaseName Pattern
+
+TuplePattern -> , Pattern TuplePattern
+              | epsilon
 
 Constant -> Int // Not implemented yet
         | Float

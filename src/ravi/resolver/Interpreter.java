@@ -1,10 +1,10 @@
 package ravi.resolver;
 
-import ravi.analysis.Syntax;
 import ravi.model.Application;
 import ravi.model.Func;
 import ravi.model.Value;
 import ravi.analysis.ast.*;
+import ravi.analysis.Token;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +20,12 @@ public final class Interpreter {
 
     public void interpretProgram(Program program) {
         if (program != null) {
-            interpretInstruction(program.statement());
+            interpretStmt(program.statement());
             interpretProgram(program.program());
         }
     }
 
-    public void interpretInstruction(Statement statement) {
+    public void interpretStmt(Statement statement) {
 
         if (statement instanceof Statement.Let let) {
             String name = Nameable.stringOf(let.name());
@@ -39,6 +39,10 @@ public final class Interpreter {
             interpretModuleContent(moduleEnv, module.moduleContent());
         }
 
+        else if (statement instanceof Statement.TypeADTStatement adtStatement) {
+            defineADTType(environment, adtStatement);
+        }
+
         else if (statement instanceof Statement.Instr instr) {
             instr.expression().forEach(this::evaluate);
         }
@@ -47,9 +51,30 @@ public final class Interpreter {
 
     void interpretModuleContent(Environment environment, ModuleContent content) {
         if (content == null) return;
-        Statement.Let let = content.let();
-        defineFunction(environment, Nameable.stringOf(let.name()), let.parameters(), let.expr());
+        if (content.statement() instanceof Statement.Let let) {
+            defineFunction(environment, Nameable.stringOf(let.name()), let.parameters(), let.expr());
+        }
+        else if (content.statement() instanceof Statement.TypeADTStatement adt) {
+            defineADTType(environment, adt);
+        }
         interpretModuleContent(environment, content.restContent());
+    }
+
+    private void defineADTType(Environment environment, Statement.TypeADTStatement adt) {
+        adt.typesConstructors().forEach((caseName, typeExpression) -> {
+            String name = Nameable.stringOf(caseName);
+            if (typeExpression instanceof TypeExpression.TupleType type) {
+                environment.define(name, Application.value(1, (inter, args) -> {
+                    var arg = args
+                            .stream()
+                            .findFirst()
+                            .orElseThrow(RuntimeException::new);
+                    return Value.adt(name, arg);
+                }));
+            } else {
+                environment.define(name, Value.adt(name, Value.unit()));
+            }
+        });
     }
 
     void evaluateList(RaviRestList rest, List<Value> values) {
@@ -80,13 +105,12 @@ public final class Interpreter {
             throw new InterpretException("");
         }
 
-        if (expression instanceof Expression.ConsCell consCell) {
-            Value head = evaluate(consCell.head());
-            Value tail = evaluate(consCell.tail());
-            if (tail instanceof Value.VList list) {
-                return Value.list(Stream.concat(Stream.of(head), list.values().stream()).toList());
-            }
-            throw new InterpretException();
+        if (expression instanceof Expression.Tuple tuple) {
+            return new Value.VTuple(tuple
+                    .expressions()
+                    .stream()
+                    .map(this::evaluate)
+                    .toList());
         }
 
         if (expression instanceof Expression.PatternMatching pm) {
@@ -96,7 +120,7 @@ public final class Interpreter {
                     return evaluate(pm.expressions().get(i));
                 }
             }
-            throw new InterpretException("Missing '_' pattern for '%s' moduleName."
+            throw new InterpretException("Missing '_' pattern for '%s' name."
                             .formatted(value.toStr()));
         }
 
@@ -144,7 +168,7 @@ public final class Interpreter {
         }
 
         if (expression instanceof Expression.LetIn expr)  {
-            defineFunction(environment, Nameable.stringOf(expr.valueName()), expr.parameters(), expr.expr());
+            defineFunction(environment, Nameable.stringOf(expr.name()), expr.parameters(), expr.expr());
             return evaluate(expr.result(), environment);
         }
 
@@ -167,25 +191,25 @@ public final class Interpreter {
 
     private Value binary(Expression.Binary binary) {
 
-        if (binary.operator().symbolInfixOp().equals(Syntax.Symbol.Slash)) {
+        if (binary.operator().symbolInfixOp().equals(Token.Symbol.Slash)) {
             var left = (Value.VInt) evaluate(binary.left());
             var right = (Value.VInt) evaluate(binary.right());
             return Value.integer(left.integer() * right.integer());
         }
 
-        if (binary.operator().symbolInfixOp().equals(Syntax.Symbol.Asterisk)) {
+        if (binary.operator().symbolInfixOp().equals(Token.Symbol.Asterisk)) {
             var left = (Value.VInt) evaluate(binary.left());
             var right = (Value.VInt) evaluate(binary.right());
             return Value.integer(left.integer() * right.integer());
         }
 
-        if (binary.operator().symbolInfixOp().equals(Syntax.Symbol.Minus)) {
+        if (binary.operator().symbolInfixOp().equals(Token.Symbol.Minus)) {
             var left = (Value.VInt) evaluate(binary.left());
             var right = (Value.VInt) evaluate(binary.right());
             return Value.integer(left.integer() - right.integer());
         }
 
-        if (binary.operator().symbolInfixOp().equals(Syntax.Symbol.Plus)) {
+        if (binary.operator().symbolInfixOp().equals(Token.Symbol.Plus)) {
             var left = (Value.VInt) evaluate(binary.left());
             var right = (Value.VInt) evaluate(binary.right());
             return Value.integer(left.integer() + right.integer());
@@ -238,8 +262,32 @@ public final class Interpreter {
             return value.equals(v);
         }
 
-        if (pattern instanceof Pattern.PGroup pGroup) {
-            return patternMatch(pGroup.inner(), value);
+        if (pattern instanceof Pattern.PAdt pAdt && value instanceof Value.VAlgebraicDataType adt) {
+            if (!adt.name().equals(Nameable.stringOf(pAdt.name()))) {
+                return false;
+            }
+            if (pAdt.pattern() != null) {
+                return patternMatch(pAdt.pattern(), adt.value());
+            }
+            return true;
+        }
+
+        if (pattern instanceof Pattern.PTuple pTuple && value instanceof Value.VTuple vTuple) {
+            for (int i = 0; i < pTuple.patterns().size(); i++) {
+                var t = pTuple.patterns().get(i);
+                var v = vTuple.values().get(i);
+                if (!patternMatch(t, v))
+                    return false;
+            }
+            return true;
+        }
+
+        if (pattern instanceof Pattern.PTuple pTuple) {
+            if (!pTuple.patterns().isEmpty())
+                return patternMatch(
+                        pTuple.patterns().get(0),
+                        value);
+            return false;
         }
 
         throw new IllegalStateException("Missing pattern implementation.");

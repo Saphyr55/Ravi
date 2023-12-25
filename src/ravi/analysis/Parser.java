@@ -36,9 +36,46 @@ public final class Parser {
      * @return statement
      */
     private Statement statement() {
-        if (check(Kind.LetKw)) return let();
+        if (check(Kind.LetKw)) return letStmt();
+        if (check(Kind.TypeKw)) return typeStmt();
         if (check(Kind.ModuleKw)) return moduleStmt();
         return instructionExpr();
+    }
+
+    private Statement typeStmt() {
+        consume(Kind.TypeKw, "Missing 'type' keyword.");
+        Nameable.TypeName name = typeName("Missing the type name.");
+        consume(Kind.Equal, "We need a '=' symbole");
+        match(Kind.Pipe);
+        Statement adt = typeADTStmt(name);
+        consume(Kind.EndKw, "Missing the 'end' keyword to close the declaration type.");
+        return adt;
+    }
+
+    private Statement.TypeADTStatement typeADTStmt(Nameable.TypeName name) {
+        Map<Nameable.CaseName, TypeExpression> typesConstructors = new HashMap<>();
+        do {
+            TypeExpression expression = null;
+            Nameable.CaseName caseName = caseName("We need a case name.");
+            if (match(Kind.OfKw)) {
+                expression = tupleTypeExpr();
+            }
+            typesConstructors.put(caseName, expression);
+        } while (match(Kind.Pipe));
+        return new Statement.TypeADTStatement(name, typesConstructors);
+    }
+
+    private TypeExpression tupleTypeExpr() {
+        List<TypeExpression> tuple = new ArrayList<>();
+        Token c;
+        do {
+            Nameable.TypeName typeName
+                    = typeName("Missing the type name.");
+            tuple.add(new TypeExpression.NameType(typeName));
+            c = currentToken();
+        } while (match(Kind.Operator) && c.value().equals(Token.Symbol.Asterisk));
+
+        return new TypeExpression.TupleType(tuple);
     }
 
     /**
@@ -57,20 +94,20 @@ public final class Parser {
     }
 
     /**
-     * Let -> let ValueName Parameters = Expr end
+     * Let -> statement ValueName Parameters = Expr end
      *
-     * @return let
+     * @return statement
      */
-    private Statement.Let let() {
+    private Statement.Let letStmt() {
 
-        consume(Kind.LetKw, "We need the 'let' keyword.");
+        consume(Kind.LetKw, "We need the 'statement' keyword.");
         Nameable.ValueName valueName = valueName("We need a value name.");
         Parameters parameters = parameters();
 
         consume(Kind.Equal, "We need the '=' symbol.");
 
         Expression result = expression();
-        consume(Kind.EndKw, "We need the 'end' keyword to close a let declarations.");
+        consume(Kind.EndKw, "We need the 'end' keyword to close a statement declarations.");
 
         return new Statement.Let(valueName, parameters, result);
     }
@@ -88,7 +125,7 @@ public final class Parser {
         consume(Kind.Equal, "We need the '=' symbol.");
 
         ModuleContent content = moduleContent();
-        consume(Kind.EndKw, "We need the 'end' keyword to close a let the module");
+        consume(Kind.EndKw, "We need the 'end' keyword to close a statement the module");
 
         return new Statement.Module(moduleName, content);
     }
@@ -97,12 +134,16 @@ public final class Parser {
      * ModuleContent -> ModuleContent'<br>
      * ModuleContent' -> Let ModuleContent  | epsilon
      *
-     * @return module content
+     * @return module statement
      */
     private ModuleContent moduleContent() {
         if (check(Kind.LetKw)) {
-            Statement.Let let = let();
-            return new ModuleContent(let, moduleContent());
+            Statement.Let letStmt = letStmt();
+            return new ModuleContent(letStmt, moduleContent());
+        }
+        if (check(Kind.TypeKw)) {
+            Statement typeStmt = typeStmt();
+            return new ModuleContent(typeStmt, moduleContent());
         }
         return null;
     }
@@ -115,7 +156,7 @@ public final class Parser {
             Token token = consume(Kind.Operator, "");
             Expression right = expression();
             return new Expression.ApplicationOperator(
-                    (String) token.value(), expression, right);
+                    right, (String) token.value(), expression);
         }
 
         if (expression != null && check(Kind.DoubleColon)) {
@@ -132,8 +173,8 @@ public final class Parser {
         Expression expr = comparison();
 
         var value = currentToken().text();
-        var check = value.equals(Syntax.Symbol.NotEqual) ||
-                value.equals(Syntax.Symbol.Equal);
+        var check = value.equals(Token.Symbol.NotEqual) ||
+                value.equals(Token.Symbol.Equal);
 
         while (check(Kind.Operator) && check) {
             Operator operator = operator();
@@ -148,10 +189,10 @@ public final class Parser {
         Expression expr = term();
 
         var value = currentToken().text();
-        var check = value.equals(Syntax.Symbol.Greater) ||
-                value.equals(Syntax.Symbol.Lower)   ||
-                value.equals(Syntax.Symbol.LowerEqual) ||
-                value.equals(Syntax.Symbol.GreaterEqual);
+        var check = value.equals(Token.Symbol.Greater) ||
+                value.equals(Token.Symbol.Lower)   ||
+                value.equals(Token.Symbol.LowerEqual) ||
+                value.equals(Token.Symbol.GreaterEqual);
 
         while (check(Kind.Operator) && check) {
             Operator operator = operator();
@@ -168,8 +209,8 @@ public final class Parser {
 
         var value = currentToken().text();
         var check =
-                value.equals(Syntax.Symbol.Minus) ||
-                value.equals(Syntax.Symbol.Plus);
+                value.equals(Token.Symbol.Minus) ||
+                value.equals(Token.Symbol.Plus);
 
         while (check(Kind.Operator) && check) {
             Operator operator = operator();
@@ -186,8 +227,8 @@ public final class Parser {
 
         var value = currentToken().text();
         var check =
-                value.equals(Syntax.Symbol.Slash) ||
-                value.equals(Syntax.Symbol.Asterisk);
+                value.equals(Token.Symbol.Slash) ||
+                value.equals(Token.Symbol.Asterisk);
 
         while (check(Kind.Operator) && check) {
             Operator operator = operator();
@@ -202,8 +243,8 @@ public final class Parser {
 
         var value = currentToken().text();
         var check =
-                value.equals(Syntax.Symbol.Exclamation) ||
-                value.equals(Syntax.Symbol.Minus);
+                value.equals(Token.Symbol.Exclamation) ||
+                value.equals(Token.Symbol.Minus);
 
         if (check(Kind.Operator) && check) {
             Operator operator = operator();
@@ -279,12 +320,12 @@ public final class Parser {
      * @return expr
      */
     private Expression moduleCallExpr() {
-
-        Nameable.ModuleName moduleName = moduleName("We need the name of the module.");
-        consume(Kind.Dot, "We need the '.' symbol to call a declaration from the module.");
-        Nameable.ValueName labelName = valueName("We need the name of a declaration from the module.");
-
-        return new Expression.ModuleCallExpr(moduleName, labelName);
+        Identifier.Capitalized identifier = capitalized("We need the a capitalized name.");
+        if (match(Kind.Dot)) {
+            Nameable.ValueName labelName = valueName("We need a value name of a declaration from the module.");
+            return new Expression.ModuleCallExpr(new Nameable.ModuleName(identifier), labelName);
+        }
+        return new Expression.IdentExpr(new Nameable.ValueName.NType(identifier));
     }
 
     /**
@@ -394,9 +435,23 @@ public final class Parser {
             return new Expression.IdentExpr(operator);
         }
         Expression expression = expression();
+        if (check(Kind.Comma)) {
+            return tupleExpr(expression);
+        }
         consume(Kind.CloseParenthesis, "We need a ')' symbol.");
         if (expression == null) return new Expression.UnitExpr();
         return new Expression.ParenthesisExpr(expression);
+    }
+
+    private Expression tupleExpr(Expression expression) {
+        List<Expression> expressions = new ArrayList<>();
+        expressions.add(expression);
+        while (match(Kind.Comma)) {
+            Expression expr = expression();
+            expressions.add(expr);
+        }
+        consume(Kind.CloseParenthesis, "We need to close parenthesis.");
+        return new Expression.Tuple(expressions);
     }
 
     /**
@@ -412,20 +467,20 @@ public final class Parser {
     }
 
     /**
-     * Expr -> let ValueName Parameters = Expr in Expr
+     * Expr -> statement ValueName Parameters = Expr in Expr
      *
      * @return expr
      */
     private Expression letIn() {
 
-        consume(Kind.LetKw, "We need the 'let' keyword.");
+        consume(Kind.LetKw, "We need the 'statement' keyword.");
         Nameable.ValueName valueName = valueName("We need a value name.");
         Parameters parameters = parameters();
 
         consume(Kind.Equal, "We need the '=' symbol.");
 
         Expression resultLet = expression();
-        consume(Kind.InKw, "We need the 'in' keyword to close a let declarations.");
+        consume(Kind.InKw, "We need the 'in' keyword to close a statement declarations.");
         Expression resultIn = expression();
 
         return new Expression.LetIn(valueName, parameters, resultLet, resultIn);
@@ -440,7 +495,7 @@ public final class Parser {
     private Parameters parameters() {
         List<Nameable.LabelName> labelNames = new LinkedList<>();
         while (check(Kind.LowercaseIdentifier)) {
-            Nameable.LabelName labelName = labelName("We need an valueName.");
+            Nameable.LabelName labelName = labelName("We need an name.");
             labelNames.add(labelName);
         }
         return new Parameters(labelNames);
@@ -481,11 +536,21 @@ public final class Parser {
      * @return pattern
      */
     private Pattern patternPrime() {
+        if (check(Kind.CapitalizedIdentifier)) return adtPattern();
         if (check(Kind.LowercaseIdentifier)) return labelNamePattern();
-        if (check(Kind.OpenParenthesis)) return groupPattern();
+        if (check(Kind.OpenParenthesis)) return tuplePattern();
         Constant constant = constant();
         if (constant == null) return null;
         return new Pattern.PConstant(constant);
+    }
+
+    private Pattern adtPattern() {
+        Nameable.CaseName name = caseName("We need a case name.");
+        if (check(Kind.OpenParenthesis)) {
+            Pattern.PTuple tuplePattern = tuplePattern();
+            return new Pattern.PAdt(name, tuplePattern);
+        }
+        return new Pattern.PAdt(name, patternPrime());
     }
 
     /**
@@ -493,11 +558,15 @@ public final class Parser {
      *
      * @return pattern
      */
-    private Pattern groupPattern() {
+    private Pattern.PTuple tuplePattern() {
         consume(Kind.OpenParenthesis, "We need a '(' to open a group pattern.");
-        Pattern pattern = pattern();
+        List<Pattern> patterns = new ArrayList<>();
+        patterns.add(pattern());
+        while (match(Kind.Comma)) {
+            patterns.add(pattern());
+        }
         consume(Kind.CloseParenthesis, "We need a ')' to close the group pattern.");
-        return pattern;
+        return new Pattern.PTuple(patterns);
     }
 
     /**
@@ -579,11 +648,13 @@ public final class Parser {
     }
 
     private Nameable.ValueName valueName(String msg) {
-        if (check(Kind.OpenParenthesis)) {
-            consume(Kind.OpenParenthesis, "");
+        if (match(Kind.OpenParenthesis)) {
             Nameable.ValueName valueName = valueNameOp();
             consume(Kind.CloseParenthesis, "We need the symbole ')' to close the value name.");
             return valueName == null ? new Nameable.ValueName.NEmpty() : valueName;
+        }
+        if (check(Kind.CapitalizedIdentifier)) {
+            return new Nameable.ValueName.NType(capitalized(msg));
         }
         return new Nameable.ValueName.NName(lowercase(msg));
     }
@@ -596,6 +667,14 @@ public final class Parser {
 
     private Nameable.ModuleName moduleName(String msg) {
         return new Nameable.ModuleName(capitalized(msg));
+    }
+
+    private Nameable.TypeName typeName(String msg) {
+        return new Nameable.TypeName(capitalized(msg));
+    }
+
+    private Nameable.CaseName caseName(String msg) {
+        return new Nameable.CaseName(capitalized(msg));
     }
 
     private Nameable.LabelName labelName(String msg) {
@@ -624,7 +703,11 @@ public final class Parser {
         if (check(kind)) {
             return nextToken();
         }
-        throw new RuntimeException(message);
+        throw new RuntimeException(
+                "[Line: %d] Error : %s".formatted(
+                    currentToken().line(),
+                    message
+            ));
     }
 
     private boolean match(Kind kind) {
@@ -657,5 +740,6 @@ public final class Parser {
     private Token currentToken() {
         return tokens.get(position);
     }
+
 
 }

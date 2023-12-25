@@ -20,9 +20,13 @@ public record Substitution(Map<String, Type> types) {
     Substitution compose(Substitution s) {
         var ts = new HashMap<>(types);
         ts.putAll(s.types);
-
         return new Substitution(ts);
     }
 
-
+    @Override
+    public String toString() {
+        return "Substitution{" +
+                "types=" + types +
+                '}';
+    }
 }

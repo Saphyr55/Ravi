@@ -1,0 +1,18 @@
+
+type StringList =
+  | Empty
+  | List of String
+end
+
+let ( $ ) f x = f x
+end
+
+let myT = List("A")
+end
+
+let () =
+  print $
+    match Empty with
+    | List msg -> msg
+    | Empty -> "Empty!"
+end

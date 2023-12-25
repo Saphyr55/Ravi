@@ -1,15 +1,12 @@
 package ravi.analysis;
 
-import ravi.analysis.ast.Operator;
 import ravi.core.BindingManager;
 import ravi.core.Core;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Supplier;
 
-import static ravi.analysis.Syntax.Symbol;
-import static ravi.analysis.Syntax.isOperator;
+import static ravi.analysis.Token.Symbol;
 
 public final class Lexer {
 
@@ -79,7 +76,7 @@ public final class Lexer {
 
 
     private void addDefaultToken(String c) {
-        if (Syntax.isOperator(c)) {
+        if (Token.isOperator(c)) {
             addOperator(c);
             return;
         }
@@ -104,20 +101,20 @@ public final class Lexer {
         }
 
         if (c.equals(Symbol.Equal)) {
-            if (!Syntax.isOperator(advanceStr())) {
+            if (!Token.isOperator(advanceStr())) {
                 addToken(Kind.Equal);
                 return;
             }
         }
 
         if (c.equals(Symbol.Pipe)) {
-            if (!Syntax.isOperator(advanceStr())) {
+            if (!Token.isOperator(advanceStr())) {
                 addToken(Kind.Pipe);
                 return;
             }
         }
 
-        while (Syntax.isOperator(peekStr())) {
+        while (Token.isOperator(peekStr())) {
             next();
         }
 

@@ -1,8 +1,5 @@
 package ravi.infer;
 
-import java.security.Key;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -12,7 +9,7 @@ public sealed interface Type extends Typing<Type> {
 
     record TUnit() implements Type { }
 
-    record TList() implements Type { }
+    record TList(Type type) implements Type { }
 
     record TFunc(List<Type> params, Type expr) implements Type { }
 
@@ -47,14 +44,18 @@ public sealed interface Type extends Typing<Type> {
                             f.expr.ftv().stream())
                     .collect(Collectors.toUnmodifiableSet());
         }
-        if (this instanceof TList) {
-            return Set.of();
+        if (this instanceof TList list) {
+            return list.type.ftv();
         }
         throw new RuntimeException("Missing implementation of Type.");
     }
 
     @Override
     default Type apply(Substitution s) {
+
+        if (this instanceof TList list) {
+            return new TList(list.type.apply(s));
+        }
 
         if (this instanceof TVar var) {
             if (s.types().containsKey(var.name)) {
@@ -64,8 +65,8 @@ public sealed interface Type extends Typing<Type> {
         }
 
         if (this instanceof TFunc func) {
-            var params = func.params.stream().map(t -> t.apply(s)).toList();
             var expr = func.expr.apply(s);
+            var params = func.params.stream().map(t -> t.apply(s)).toList();
             return new TFunc(params, expr);
         }
 
@@ -73,6 +74,10 @@ public sealed interface Type extends Typing<Type> {
     }
 
     default String toStr() {
+
+        if (this instanceof TString) {
+            return "String";
+        }
 
         if (this instanceof TUnit) {
             return "Unit";
@@ -98,8 +103,8 @@ public sealed interface Type extends Typing<Type> {
                     + " )";
         }
 
-        if (this instanceof TList) {
-            return "[]";
+        if (this instanceof TList list) {
+            return "[" + list.type.toStr() + "]";
         }
 
         throw new RuntimeException("Missing implementation of type");

@@ -53,6 +53,7 @@ public enum Kind {
     InKw,
     WhenKw,
     ModuleKw,
+    OfKw,
 
 
 }

@@ -8,11 +8,11 @@ public sealed interface Expression {
 
     record Application(Expression expr, List<Expression> args) implements Expression { }
 
-    record ApplicationOperator(String op, Expression right, Expression left) implements Expression { }
+    record ApplicationOperator(Expression left, String op, Expression right) implements Expression { }
 
     record Instr(Expression primary, Expression result) implements Expression {}
 
-    record LetIn(Nameable.ValueName valueName, Parameters parameters, Expression expr, Expression result) implements Expression { }
+    record LetIn(Nameable.ValueName name, Parameters parameters, Expression expr, Expression result) implements Expression { }
 
     record GroupExpr(Expression expr) implements Expression { }
 
@@ -38,5 +38,7 @@ public sealed interface Expression {
     record Unary(Operator operator, Expression right) implements Expression { }
 
     record Binary(Expression left, Operator operator, Expression right) implements Expression  { }
+
+    record Tuple(List<Expression> expressions) implements Expression { }
 
 }

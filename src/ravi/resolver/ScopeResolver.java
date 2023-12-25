@@ -42,8 +42,10 @@ public final class ScopeResolver {
 
     private void resolve(ModuleContent content) {
         if (content == null) return;
-        resolveLet(content.let().parameters(), content.let().expr());
-        resolve(content.restContent());
+        if (content.statement() instanceof Statement.Let let) {
+            resolveLet(let.parameters(), let.expr());
+            resolve(content.restContent());
+        }
     }
 
     private void resolve(Expression expression) {
@@ -77,9 +79,9 @@ public final class ScopeResolver {
         }
 
         if (expression instanceof Expression.LetIn expr) {
-            declare(Nameable.stringOf(expr.valueName()));
+            declare(Nameable.stringOf(expr.name()));
             resolveLet(expr.parameters(), expr.expr());
-            define(Nameable.stringOf(expr.valueName()));
+            define(Nameable.stringOf(expr.name()));
             resolve(expr.result());
             return;
         }

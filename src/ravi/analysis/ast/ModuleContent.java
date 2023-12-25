@@ -1,5 +1,5 @@
 package ravi.analysis.ast;
 
-public record ModuleContent(Statement.Let let, ModuleContent restContent) {
+public record ModuleContent(Statement statement, ModuleContent restContent) {
 
 }

@@ -21,8 +21,8 @@ public final class NativeDeclaration {
         return Value.unit();
     }
 
-    @RaviNative(name = "neg")
-    static Value negativeInteger(Interpreter inter, Value.VInt v1) {
+    @RaviNative
+    static Value neg(Interpreter inter, Value.VInt v1) {
         return Value.integer(-v1.integer());
     }
 
