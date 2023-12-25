@@ -39,8 +39,8 @@ public final class Interpreter {
             interpretModuleContent(moduleEnv, module.moduleContent());
         }
 
-        else if (statement instanceof Statement.TypeADTStatement adtStatement) {
-            defineADTType(environment, adtStatement);
+        else if (statement instanceof Statement.ADT adt) {
+            defineADTType(environment, adt);
         }
 
         else if (statement instanceof Statement.Instr instr) {
@@ -54,26 +54,26 @@ public final class Interpreter {
         if (content.statement() instanceof Statement.Let let) {
             defineFunction(environment, Nameable.stringOf(let.name()), let.parameters(), let.expr());
         }
-        else if (content.statement() instanceof Statement.TypeADTStatement adt) {
+        else if (content.statement() instanceof Statement.ADT adt) {
             defineADTType(environment, adt);
         }
         interpretModuleContent(environment, content.restContent());
     }
 
-    private void defineADTType(Environment environment, Statement.TypeADTStatement adt) {
+    void defineADTType(Environment environment, Statement.ADT adt) {
         adt.typesConstructors().forEach((caseName, typeExpression) -> {
             String name = Nameable.stringOf(caseName);
-            if (typeExpression instanceof TypeExpression.TupleType type) {
-                environment.define(name, Application.value(1, (inter, args) -> {
-                    var arg = args
-                            .stream()
-                            .findFirst()
-                            .orElseThrow(RuntimeException::new);
-                    return Value.adt(name, arg);
-                }));
-            } else {
+            if (typeExpression == null) {
                 environment.define(name, Value.adt(name, Value.unit()));
+                return;
             }
+            environment.define(name, Application.value(1, (inter, args) -> {
+                var arg = args
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(RuntimeException::new);
+                return Value.adt(name, arg);
+            }));
         });
     }
 
@@ -98,7 +98,7 @@ public final class Interpreter {
         }
 
         if (expression instanceof Expression.ModuleCallExpr expr) {
-            Value value = environment.value(expr.moduleName().name().name());
+            Value value = environment.value(expr.moduleName().name().id());
             if (value instanceof Value.VModule module) {
                 return module.environment().get(Nameable.stringOf(expr.valueName()));
             }
@@ -120,7 +120,7 @@ public final class Interpreter {
                     return evaluate(pm.expressions().get(i));
                 }
             }
-            throw new InterpretException("Missing '_' pattern for '%s' name."
+            throw new InterpretException("Missing '_' pattern for '%s' id."
                             .formatted(value.toStr()));
         }
 
@@ -137,13 +137,18 @@ public final class Interpreter {
         }
 
         if (expression instanceof  Expression.ListExpr expr) {
+
             List<Value> values = new ArrayList<>();
+
             if (expr.list() instanceof RaviList.EmptyList){
                 return new Value.VList(List.of());
-            } else if (expr.list() instanceof RaviList.List list) {
+            }
+
+            if (expr.list() instanceof RaviList.List list) {
                 values.add(evaluate(list.head()));
                 evaluateList(list.tail(), values);
             }
+
             return Value.list(values);
         }
 
@@ -177,11 +182,15 @@ public final class Interpreter {
         }
 
         if (expression instanceof Expression.Application application) {
-            if (evaluate(application.expr()) instanceof Value.VApplication vApplication) {
+
+            var value = evaluate(application.expr());
+            if (value instanceof Value.VApplication vApplication) {
+
                 return applyValueApplication(vApplication, application.args()
                         .stream()
                         .map(this::evaluate)
                         .toList());
+
             }
             throw new InterpretException("You try to pass argument to a not function.");
         }
@@ -272,22 +281,31 @@ public final class Interpreter {
             return true;
         }
 
+        if (pattern instanceof Pattern.PAdt) {
+            return false;
+        }
+
         if (pattern instanceof Pattern.PTuple pTuple && value instanceof Value.VTuple vTuple) {
+
+            if (pTuple.patterns().size() != vTuple.values().size())
+                throw new InterpretException("Can not match.");
+
             for (int i = 0; i < pTuple.patterns().size(); i++) {
                 var t = pTuple.patterns().get(i);
                 var v = vTuple.values().get(i);
                 if (!patternMatch(t, v))
                     return false;
             }
+
             return true;
         }
 
         if (pattern instanceof Pattern.PTuple pTuple) {
-            if (!pTuple.patterns().isEmpty())
-                return patternMatch(
-                        pTuple.patterns().get(0),
-                        value);
-            return false;
+
+            if (pTuple.patterns().size() == 1)
+                return patternMatch(pTuple.patterns().get(0), value);
+
+            throw new IllegalStateException("Missing '_' pattern.");
         }
 
         throw new IllegalStateException("Missing pattern implementation.");

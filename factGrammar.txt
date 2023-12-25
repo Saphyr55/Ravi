@@ -16,19 +16,27 @@ ModuleContent' -> Let ModuleContent
 
 Let -> let ValueName Parameters = Expr end
 
-DeclType -> type TypeName = TypeExpr end
+DeclType -> type PolyInformation TypeName = TypeD
+TypeD -> Record | ADT
 
-TypeExpr -> Record | ADT
+PolyInformation -> 'Identifier PolyInformation
+          | epsilon
 
 Record -> { }
 
 ADT -> TypeName TypeInformation ADT'
 ADT' -> | TypeName TypeInformation
 
-TypeInformation -> of TypeInformation' | epsilon
-TypeInformation' -> TypeName TypeInformation''
-TypeInformation'' -> * TypeInformation'
-                   | epsilon
+TypeInformation -> of TypeExpr | epsilon
+
+TypeExpr -> TypeExpr' TypeExpr'
+TypeExpr' -> * TypeExpr
+           | -> TypeExpr
+           | ( TypeExpr )
+           | ModuleName . TypeExpr
+           | epsilon
+           | TypeName
+           | 'Identifier
 
 Parameters -> LabelName Parameters'
 Parameters' -> Parameters
@@ -58,7 +66,7 @@ Pattern -> _
 TuplePattern -> , Pattern TuplePattern
               | epsilon
 
-Constant -> Int // Not implemented yet
+Constant -> Int
         | Float
         | Text
         | String
@@ -91,6 +99,8 @@ InfixOp -> InfixSymbol
 InfixSymbol -> Operator InfixOp
             | epsilon
 Operator -> $ | & | * | + | - | / | = | > | < | @ | ^
+
+Identifier -> CapitalizedIdentifier | LowercaseIdentifier
 
 CapitalizedIdentifier -> [A-Z] CapitalizedIdentifier'
 

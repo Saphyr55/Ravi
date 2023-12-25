@@ -6,10 +6,11 @@ import ravi.analysis.Token;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public final class Inference {
 
-    private Integer freshVarCounter = 0;
+    private static Integer freshVarCounter = 0;
 
     public record Couple(Substitution s, Type t) { }
 
@@ -94,12 +95,14 @@ public final class Inference {
             var in = compress(expr);
             var name = Nameable.stringOf(in.name());
 
-            var ts = infer(context, in.expr());
+            var contextP = context.union(Map.of(name, makeScheme(fresh("a"))));
+
+            var ts = infer(contextP, in.expr());
             var s1 = ts.s;
             var t1 = ts.t;
 
-            var scheme = generalize(context.apply(s1), t1);
-            var contextP = context.union(Map.of(name, scheme));
+            var scheme = generalize(contextP.apply(s1), t1);
+            contextP = contextP.union(Map.of(name, scheme));
 
             var ts2 = infer(contextP, in.result());
             var t2 = ts2.t;
@@ -122,6 +125,12 @@ public final class Inference {
 
         if (expression instanceof Expression.UnitExpr) {
             return new Couple(Substitution.empty(), new Type.TUnit());
+        }
+
+        if (expression instanceof Expression.Tuple tuple) {
+            var cs = tuple.expressions().stream().map(e -> infer(context, e)).toList();
+            var s = cs.stream().map(Couple::s).reduce(Substitution::compose).orElse(Substitution.empty());
+            return new Couple(s, new Type.TTuple(cs.stream().map(Couple::t).toList()));
         }
 
         if (expression instanceof Expression.Instr) {
@@ -153,17 +162,27 @@ public final class Inference {
             var es = expr.expressions();
             var ps = expr.patterns();
 
-            var st0 = infer(context, expr.expression());
+            var withE = infer(context, expr.expression());
 
-            var stN = es.stream().map(e -> infer(context, e)).toList();
-            var s = stN.stream()
-                    .map(Couple::s)
+            var tau = fresh("a");
+
+            var s = IntStream.range(0, es.size())
+                    .boxed()
+                    .map(i -> {
+                        var e = es.get(i);
+                        var p = ps.get(i);
+
+                        var c = infer(context, p);
+                        var e1 = infer(c, e);
+
+                        return mgu(withE.t, e1.t);
+                    })
                     .reduce(Substitution::compose)
                     .orElse(Substitution.empty());
 
-            var t = stN.stream().findFirst().orElseThrow().t();
+            var s2 = s.compose(withE.s);
 
-            return new Couple(s, t);
+            return new Couple(s2, tau.apply(s2));
         }
 
         if (expression instanceof Expression.ConsCell consCell) {
@@ -171,17 +190,18 @@ public final class Inference {
         }
 
         if (expression instanceof Expression.ModuleCallExpr expr) {
-
+            return infer(context, new Expression.IdentExpr(expr.valueName()));
         }
 
         if (expression instanceof Expression.Unary unary) {
-
+            return infer(context, unary.right());
         }
 
         throw new RuntimeException("Missing Implementation");
     }
 
     private Couple inferBinaryOperation(Context context, String name, Expression left, Expression right) {
+
         return infer(context, new Expression.Application(
             new Expression.IdentExpr(new Nameable.ValueName.NInfixOp(new Operator(name))),
                 List.of(left, right)
@@ -189,6 +209,7 @@ public final class Inference {
     }
 
     private Substitution inferRaviList(Substitution s, Context context, Type pred, RaviRestList rest) {
+
         if (rest == null) return s;
         var st = infer(context, rest.expression());
         var sub = s.compose(mgu(pred, st.t()));
@@ -204,6 +225,7 @@ public final class Inference {
     }
 
     public Type instantiate(Scheme scheme) {
+
         var nVars = scheme
                 .forall()
                 .stream()
@@ -214,6 +236,7 @@ public final class Inference {
     }
 
     public Scheme generalize(Context context, Type type) {
+
         var typeFtv = new LinkedList<>(type.ftv());
         var ftv = context.ftv();
         typeFtv.removeAll(ftv);
@@ -221,6 +244,7 @@ public final class Inference {
     }
 
     public Substitution varBind(String name, Type type) {
+
         if (type.ftv().contains(name))
             throw new RuntimeException("occurs check fails: " + name + " vs. " + type);
 
@@ -272,6 +296,16 @@ public final class Inference {
             return mgu(t1, l2.type());
         }
 
+        if (t1 instanceof Type.TTuple tuple1 && t2 instanceof Type.TTuple tuple2) {
+            var s = Substitution.empty();
+            for (int i = 0; i < tuple1.types().size(); i++) {
+                var p1 = tuple1.types().get(i);
+                var p2 = tuple2.types().get(i);
+                s = mgu(p1, p2).compose(s);
+            }
+            return s;
+        }
+
         if (t1 instanceof Type.TString && t2 instanceof Type.TString) {
             return Substitution.empty();
         }
@@ -279,56 +313,79 @@ public final class Inference {
         throw new RuntimeException("types do not unify: " + t1.toStr() + " with a " + t2.toStr());
     }
 
-    public Couple infer(Context context, Pattern pattern) {
+    public Context infer(Context context, Pattern pattern) {
+
+        if (pattern instanceof Pattern.PAdt adt) {
+            var n  = new Nameable.ValueName.NType(adt.name().name());
+            var c  = infer(context, new Expression.IdentExpr(n));
+            if (adt.pattern() == null) { return context.apply(c.s); }
+            var c2 = infer(context, adt.pattern());
+            return c2.apply(c.s);
+        }
 
         if (pattern instanceof Pattern.PTuple tuple) {
-            var cs = tuple.patterns().stream()
-                    .map(p -> infer(context, p))
-                    .toList();
-            return new Couple(cs.)
+            return tuple.patterns().stream()
+                    .map(p -> {
+                        Objects.requireNonNull(p);
+                        return infer(context, p);
+                    })
+                    .reduce(Context::union)
+                    .orElse(context);
         }
 
         if (pattern instanceof Pattern.PAny) {
-            return new Couple(Substitution.empty(), fresh("a"));
+            return context;
         }
 
         if (pattern instanceof Pattern.PConstant constant) {
-            return infer(constant.constant());
+            var c = infer(constant.constant());
+            return context.apply(c.s);
         }
 
-        if (pattern instanceof Pattern.PLabelName) {
-            return new Couple(Substitution.empty(), fresh("a"));
+        if (pattern instanceof Pattern.PLabelName labelName) {
+            var name = Nameable.stringOf(labelName.labelName());
+            return context.union(Map.of(name, generalize(context, fresh("a"))));
         }
 
         if (pattern instanceof Pattern.PCons cons) {
             var st0 = infer(context, cons.head());
             var st1 = infer(context, cons.tail());
-            var s2 = mgu(st0.t(), st1.t());
-            return new Couple(s2, fresh("a"));
+            return st0.union(st1);
+        }
+
+        if (pattern instanceof Pattern.PList list) {
+            return context;
         }
 
         throw new RuntimeException("Missing Implementation");
     }
 
     public Couple infer(Constant constant) {
+
         if (constant instanceof Constant.CFloat) {
             return new Couple(Substitution.empty(), new Type.TFloat());
         }
+
         if (constant instanceof Constant.CInt) {
             return new Couple(Substitution.empty(), new Type.TInt());
         }
+
         if (constant instanceof Constant.CString) {
             return new Couple(Substitution.empty(), new Type.TString());
         }
+
         if (constant instanceof Constant.CText) {
             return new Couple(Substitution.empty(), new Type.TString());
         }
+
         if (constant instanceof Constant.CUnit) {
             return new Couple(Substitution.empty(), new Type.TUnit());
         }
+
         if (constant instanceof Constant.CEmptyList) {
             return new Couple(Substitution.empty(), new Type.TList(fresh("a")));
         }
+
         throw new RuntimeException("Missing Implementation");
     }
 
@@ -340,6 +397,35 @@ public final class Inference {
     }
 
     public Context infer(Context context, Statement statement) {
+
+        if (statement instanceof Statement.ADT adt) {
+
+            var c = context;
+            var typeName = Nameable.stringOf(adt.name());
+            List<Type> constructors = new ArrayList<>();
+            c = c.union(Map.of(typeName, makeScheme(new Type.ADT(typeName, List.of()))));
+
+            for (var entry : adt.typesConstructors().entrySet()) {
+                var name = Nameable.stringOf(entry.getKey());
+                if (entry.getValue() != null) {
+                    var type = new Type.TVar(typeName);
+                    var constructorType = determine(entry.getValue());
+                    constructorType = new Type.TFunc(List.of(constructorType), type);
+                    constructors.add(constructorType);
+                    c = c.union(Map.of(name, generalize(c, constructorType)));
+                } else {
+                    var constructorType = new Type.TVar(typeName);
+                        constructors.add(constructorType);
+                    c = c.union(Map.of(name, generalize(c, constructorType)));
+                }
+            }
+
+            Context finalC = c;
+            var l = constructors.stream().map(type -> generalize(finalC, type)).toList();
+            c = c.union(Map.of(typeName, makeScheme(new Type.ADT(typeName, l))));
+
+            return c;
+        }
 
         if (statement instanceof Statement.Instr) {
             return context;
@@ -353,21 +439,22 @@ public final class Inference {
 
             var letP = compress(let);
             var name = Nameable.stringOf(letP.name());
+            var contextP = context.union(Map.of(name, makeScheme(fresh("a"))));
 
-            var ts = infer(context, letP.expr());
+            var ts = infer(contextP, letP.expr());
             var tau = ts.t;
             var s0 = ts.s;
 
-            var scheme = generalize(context, tau.apply(s0));
+            var scheme = generalize(contextP, tau.apply(s0));
 
-            return context.union(Map.of(name, scheme));
+            return contextP.union(Map.of(name, scheme));
         }
 
         throw new RuntimeException("Missing Implementation");
     }
 
     public Context infer(Context context, ModuleContent content) {
-        if (content == null) return new Context();
+        if (content == null) return new Context().union(context);
         var ctx = infer(context, content.statement());
         return infer(ctx, content.restContent());
     }
@@ -382,6 +469,28 @@ public final class Inference {
         if (let.parameters().declarations().isEmpty()) return let;
         var lambda = new Expression.Lambda(let.parameters(), let.expr());
         return new Statement.Let(let.name(), new Parameters(List.of()), lambda);
+    }
+
+    public Type determine(TypeExpression expression) {
+        Objects.requireNonNull(expression);
+
+        if (expression instanceof TypeExpression.Name name) {
+            return new Type.TVar(Nameable.stringOf(name.name()));
+        }
+        if (expression instanceof TypeExpression.Poly poly) {
+            return new Type.TVar("'" + poly.identifier().id());
+        }
+        if (expression instanceof TypeExpression.Arrow arrow) {
+            var types = arrow.types().stream().map(this::determine).toList();
+            return new Type.TFunc(types.subList(1, types.size()), types.get(0));
+        }
+        if (expression instanceof TypeExpression.Tuple tuple) {
+            return new Type.TTuple(tuple.tuple().stream().map(this::determine).toList());
+        }
+        if (expression instanceof TypeExpression.GetTypeModule get) {
+            return new Type.TVar(Nameable.stringOf(get.typeName()));
+        }
+        throw new RuntimeException("Missing implementation.");
     }
 
 }

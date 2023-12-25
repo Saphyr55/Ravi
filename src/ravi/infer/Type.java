@@ -9,6 +9,8 @@ public sealed interface Type extends Typing<Type> {
 
     record TUnit() implements Type { }
 
+    record TTuple(List<Type> types) implements Type { }
+
     record TList(Type type) implements Type { }
 
     record TFunc(List<Type> params, Type expr) implements Type { }
@@ -38,14 +40,24 @@ public sealed interface Type extends Typing<Type> {
         if (this instanceof TUnit) {
             return Set.of();
         }
+        if (this instanceof TTuple tuple) {
+            return tuple.types
+                    .stream()
+                    .flatMap(type -> type.ftv().stream())
+                    .collect(Collectors.toUnmodifiableSet());
+        }
         if (this instanceof TFunc f) {
             return Stream
-                    .concat(f.params().stream().flatMap(type -> type.ftv().stream()),
+                    .concat(f.params().stream()
+                            .flatMap(type -> type.ftv().stream()),
                             f.expr.ftv().stream())
                     .collect(Collectors.toUnmodifiableSet());
         }
         if (this instanceof TList list) {
             return list.type.ftv();
+        }
+        if (this instanceof ADT adt) {
+            return Set.of();
         }
         throw new RuntimeException("Missing implementation of Type.");
     }
@@ -73,7 +85,13 @@ public sealed interface Type extends Typing<Type> {
         return this;
     }
 
+    record ADT(String typeName, List<Scheme> schemes) implements Type {}
+
     default String toStr() {
+
+        if (this instanceof ADT adt) {
+            return adt.typeName();
+        }
 
         if (this instanceof TString) {
             return "String";
@@ -107,7 +125,12 @@ public sealed interface Type extends Typing<Type> {
             return "[" + list.type.toStr() + "]";
         }
 
+        if (this instanceof TTuple tuple) {
+            return String.join(" * ", tuple.types.stream().map(Type::toStr).toList());
+        }
+
         throw new RuntimeException("Missing implementation of type");
     }
+
 
 }

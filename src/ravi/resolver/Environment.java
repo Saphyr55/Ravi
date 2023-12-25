@@ -39,7 +39,7 @@ public final class Environment {
 
         if (enclosing != null) return enclosing.value(name);
 
-        throw new InterpretException("Undefined variable '" + name + "' on get value name.");
+        throw new InterpretException("Undefined variable '" + name + "' on get value id.");
     }
 
     public Value search(String name) {
@@ -51,7 +51,7 @@ public final class Environment {
             }
             environment = environment.enclosing;
         }
-        throw new InterpretException("Undefined variable '" + name + "' on get name.");
+        throw new InterpretException("Undefined variable '" + name + "' on get id.");
     }
 
 }

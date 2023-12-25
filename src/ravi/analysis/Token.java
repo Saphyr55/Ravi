@@ -137,6 +137,7 @@ public record Token(Kind kind, Object value, String text, int line, int col) {
         public static final String GreaterEqual = ">=";
         public static final String LowerEqual = "<=";
         public static final String NotEqual = "!=";
+        public static final String Quote = "'";
         public static final String DoubleColon = "::";
     }
 }

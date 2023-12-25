@@ -1,18 +1,45 @@
-
-type StringList =
-  | Empty
-  | List of String
-end
-
 let ( $ ) f x = f x
 end
 
-let myT = List("A")
+type 'a List =
+  | Empty
+  | Cons: 'a * StringList
+
+module Game =
+
+  type Player = Hero: (String * Int)
+
+  let hit player damage =
+      match player with
+      | Hero (name, hp) ->
+        Hero (name, hp - damage)
+  end
+
+end
+
+let player = Game.Hero("Andy", 10)
+end
+
+print $ Game.hit player 5;
+
+let count l =
+  let aux l n =
+    match l with
+    | Empty -> n
+    | Cons (h, t) -> aux t (1 + n)
+  in
+  aux l 0
+end
+
+let append l el =
+  match l with
+  | Empty -> Cons(el, l)
+  | Cons (_, t) -> append t el
+end
+
+let l = Cons("", Cons("", Cons("", Cons("", Cons("", Cons("", Cons("", Empty)))))))
 end
 
 let () =
-  print $
-    match Empty with
-    | List msg -> msg
-    | Empty -> "Empty!"
+  print $ count l
 end

@@ -24,25 +24,25 @@ public sealed interface Nameable {
 
     static String stringOf(Nameable nameable) {
         if (nameable instanceof LabelName n) {
-            return n.name.name();
+            return n.name.id();
         }
         if (nameable instanceof ModuleName n) {
-            return n.name.name();
+            return n.name.id();
         }
         if (nameable instanceof TypeName n) {
-            return n.name().name();
+            return n.name().id();
         }
         if (nameable instanceof CaseName n) {
-            return n.name().name();
+            return n.name().id();
         }
         if (nameable instanceof ValueName v && v instanceof ValueName.NName n) {
-            return n.name.name();
+            return n.name.id();
         }
         if (nameable instanceof ValueName v && v instanceof ValueName.NInfixOp o) {
             return o.operator.symbolInfixOp();
         }
         if (nameable instanceof ValueName v && v instanceof ValueName.NType t) {
-            return t.name.name();
+            return t.name.id();
         }
         if (nameable instanceof ValueName v && v instanceof ValueName.NEmpty) {
             return "_";

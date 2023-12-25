@@ -18,8 +18,9 @@ public sealed interface Statement {
                   ModuleContent moduleContent)
             implements Statement { }
 
-    record TypeADTStatement(Nameable.TypeName name,
-                            Map<Nameable.CaseName, TypeExpression> typesConstructors)
+    record ADT(List<TypeExpression.Poly> polyTypes,
+               Nameable.TypeName name,
+               Map<Nameable.CaseName, TypeExpression> typesConstructors)
             implements Statement { }
 
 

@@ -4,8 +4,16 @@ import java.util.List;
 
 public interface TypeExpression {
 
-    record TupleType(List<TypeExpression> tuple) implements TypeExpression { }
+    record Tuple(List<TypeExpression> tuple) implements TypeExpression { }
 
-    record NameType(Nameable.TypeName name) implements TypeExpression { }
+    record Name(Nameable.TypeName name) implements TypeExpression { }
+
+    record Arrow(List<TypeExpression> types) implements TypeExpression { }
+
+    record GetTypeModule(Nameable.ModuleName moduleName,
+                         Nameable.TypeName typeName)
+            implements TypeExpression { }
+
+    record Poly(Identifier identifier) implements TypeExpression { }
 
 }

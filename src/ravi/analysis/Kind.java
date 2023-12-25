@@ -27,6 +27,7 @@ public enum Kind {
     Arrow,
     Dot,
     Operator,
+    Quote,
 
     // Keywords
     OpenKw,
