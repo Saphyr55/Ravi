@@ -3,11 +3,11 @@ end
 
 type 'a List =
   | Empty
-  | Cons: 'a * StringList
+  | Cons: 'a * ('a List)
 
 module Game =
 
-  type Player = Hero: (String * Int)
+  type Player = Hero: String * Int
 
   let hit player damage =
       match player with

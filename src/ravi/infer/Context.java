@@ -6,15 +6,14 @@ import ravi.resolver.InterpretException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public record Context(Map<String, Scheme> env, Context enclosing) implements Typing<Context> {
+public record Context(Map<String, Scheme> env, Map<String, Scheme> types, Context enclosing) implements Typing<Context> {
 
     public Context(Map<String, Scheme> env, Context enclosing) {
-        this.env = Map.copyOf(env);
-        this.enclosing = enclosing;
+        this(Map.copyOf(env), Map.of(), enclosing);
     }
 
     public Context() {
-        this(Map.of(), null);
+        this(Map.of(), Map.of(),null);
     }
 
     public Context remove(String var) {
@@ -32,11 +31,17 @@ public record Context(Map<String, Scheme> env, Context enclosing) implements Typ
     public Context union(Map<String, Scheme> env) {
         var m = new HashMap<>(this.env);
         m.putAll(env);
-        return new Context(m, enclosing);
+        return new Context(m, types, enclosing);
+    }
+
+    public Context unionTypes(Map<String, Scheme> types) {
+        var m = new HashMap<>(this.types);
+        m.putAll(types);
+        return new Context(env, m, enclosing);
     }
 
     public Context union(Context context) {
-        return union(context.env);
+        return union(context.env).unionTypes(context.types);
     }
 
     public Scheme get(String valueName) {
@@ -91,7 +96,14 @@ public record Context(Map<String, Scheme> env, Context enclosing) implements Typ
 
     @Override
     public String toString() {
-        return String.join("\n", env.entrySet().stream().map(e ->
+
+        var types = this.types.entrySet().stream().map(e ->
+                "type " + e.getKey() + " = " + e.getValue()).toList();
+
+        return
+                String.join("\n", types) + (types.isEmpty() ? "" : "\n") +
+
+                String.join("\n", env.entrySet().stream().map(e ->
                 "val " + e.getKey() + " : " + e.getValue()).toList());
     }
 }

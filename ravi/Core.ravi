@@ -1,0 +1,6 @@
+
+let ( |> ) x f = f x
+end
+
+let ( $ ) f x = f x
+end

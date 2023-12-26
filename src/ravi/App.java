@@ -61,24 +61,15 @@ public class App implements ActionListener {
 
         Lexer lexer = new Lexer();
         Parser parser = new Parser();
-        Interpreter interpreter = new Interpreter(context());
+        Interpreter interpreter = new Interpreter(environment());
 
         ScopeResolver scopeResolver = new ScopeResolver(interpreter);
         List<Token> tokens = lexer.scan(source);
         Program program = parser.program(tokens);
 
-
         Inference inference = new Inference();
-        var context = inference.infer(new Context(Map.of(
-                "::", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TList(new Type.TVar("'a"))), new Type.TList(new Type.TVar("'a")))),
-                "print", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a")), new Type.TUnit())),
-                "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt()))
-        ), null), program);
-
-       //System.out.println(context);
+        Context context = inference.infer(context(), program);
+        System.out.println(context);
 
         scopeResolver.resolve(program);
         interpreter.interpretProgram(program);
@@ -91,6 +82,21 @@ public class App implements ActionListener {
         SwingUtilities.invokeLater(() -> app.init(0));
     }
 
+    private static Context context() {
+        return new Context(Map.of(
+                "print", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a")), new Type.TUnit())),
+                "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt()))
+        ), Map.of(
+                "Float", new Scheme(List.of(), new Type.TFloat()),
+                "Unit", new Scheme(List.of(), new Type.TUnit()),
+                "Int", new Scheme(List.of(), new Type.TInt()),
+                "String", new Scheme(List.of(), new Type.TString())
+        ), new Context());
+    }
+
     static Proposition mapValueToProposition(Value value) {
         if (value instanceof Value.VObject object &&
                 object.content() instanceof Proposition proposition) {
@@ -99,7 +105,7 @@ public class App implements ActionListener {
         throw new InterpretException("The function 'insert' take a 'Proposition' list as second parameter.");
     }
 
-    static Environment context() {
+    static Environment environment() {
         Environment env = new Environment();
         NativeDeclaration.genNative(env);
 

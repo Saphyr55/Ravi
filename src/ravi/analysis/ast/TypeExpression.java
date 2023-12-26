@@ -16,4 +16,6 @@ public interface TypeExpression {
 
     record Poly(Identifier identifier) implements TypeExpression { }
 
+    record Types(TypeExpression type, TypeExpression name) implements TypeExpression { }
+
 }

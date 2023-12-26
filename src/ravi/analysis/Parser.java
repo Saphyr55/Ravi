@@ -74,7 +74,8 @@ public final class Parser {
      */
     private Statement.ADT typeADTStmt(List<TypeExpression.Poly> polyTypes, Nameable.TypeName name) {
 
-        Map<Nameable.CaseName, TypeExpression> typesConstructors = new HashMap<>();
+        Map<Nameable.CaseName, TypeExpression> typesConstructors
+                = new HashMap<>();
 
         do {
             TypeExpression expression = null;
@@ -97,42 +98,23 @@ public final class Parser {
      * @return Type expression
      */
     private TypeExpression typeExpr() {
-        return typeExprPrime();
+        return arrowTypeExpr();
     }
 
-    private TypeExpression typeExprPrime() {
 
-        TypeExpression expr;
+    private TypeExpression groupTypeExpr() {
 
-        if (check(Kind.Quote)) {
+        consume(Kind.OpenParenthesis, "We need to open the parenthesis.");
+        TypeExpression expression = typeExpr();
+        consume(Kind.CloseParenthesis, "We need to close the parenthesis.");
+        return expression;
+    }
 
-            expr = polyTypeExpr();
-
-        } else if(match(Kind.OpenParenthesis)) {
-
-            TypeExpression expression = typeExprPrime();
-            consume(Kind.CloseParenthesis, "We need to close the parenthesis.");
-            expr = expression;
-        } else if (check(Kind.CapitalizedIdentifier)) {
-
-            var name = capitalized("We need a type name.");
-            expr = check(Kind.Dot)
-                    ? typeModuleExpr(new Nameable.ModuleName(name))
-                    : new TypeExpression.Name(new Nameable.TypeName(name));
-        } else {
-
-            expr = typeExpr();
-        }
-
-        if (check(Kind.Operator) && currentToken().value().equals(Token.Symbol.Asterisk)) {
-            return tupleTypeExpr(expr);
-        }
-
-        if (check(Kind.Arrow)) {
-            return arrowTypeExpr(expr);
-        }
-
-        return expr;
+    private TypeExpression typeConstr() {
+        var name = capitalized("We need a type name.");
+        return check(Kind.Dot)
+                ? typeModuleExpr(new Nameable.ModuleName(name))
+                : new TypeExpression.Name(new Nameable.TypeName(name));
     }
 
     /**
@@ -140,16 +122,18 @@ public final class Parser {
      * @return Type expression
      */
     private TypeExpression.Poly polyTypeExpr() {
+
         consume(Kind.Quote, "We need a quote symbol to precise a poly type.");
         return new TypeExpression.Poly(identifier());
     }
 
     /**
      *
-     * @param moduleName Module id
+     * @param moduleName Module name
      * @return Type expression
      */
     private TypeExpression.GetTypeModule typeModuleExpr(Nameable.ModuleName moduleName) {
+
         consume(Kind.Dot, "We need a '.' to call");
         Nameable.TypeName typeName = typeName("We need a type id.");
         return new TypeExpression.GetTypeModule(moduleName, typeName);
@@ -157,32 +141,73 @@ public final class Parser {
 
     /**
      *
-     * @param expression Type expression
      * @return Type expression
      */
-    private TypeExpression.Arrow arrowTypeExpr(TypeExpression expression) {
-        List<TypeExpression> tuple = new ArrayList<>();
-        tuple.add(expression);
-        while (match(Kind.Arrow)) {
-            tuple.add(typeExpr());
+    private TypeExpression arrowTypeExpr() {
+
+        TypeExpression expression = tupleTypeExpr();
+
+        if (check(Kind.Arrow)) {
+
+            List<TypeExpression> tuple = new ArrayList<>();
+            tuple.add(expression);
+
+            while (match(Kind.Arrow)) {
+                tuple.add(typeExpr());
+            }
+
+            return new TypeExpression.Arrow(tuple);
+
         }
-        return new TypeExpression.Arrow(tuple);
+
+        return expression;
     }
 
     /**
      *
-     * @param expression Type expression
      * @return Type expression
      */
-    private TypeExpression.Tuple tupleTypeExpr(TypeExpression expression) {
-        List<TypeExpression> tuple = new ArrayList<>();
-        tuple.add(expression);
+    private TypeExpression tupleTypeExpr() {
+
+        TypeExpression expression = typesType();
+
         Token c = currentToken();
-        while (c.text().equals(Token.Symbol.Asterisk) && match(Kind.Operator)) {
-            tuple.add(typeExpr());
-            c = currentToken();
+
+        if (c.text().equals(Token.Symbol.Asterisk) && check(Kind.Operator)) {
+
+            List<TypeExpression> tuple = new ArrayList<>();
+            tuple.add(expression);
+
+            while (c.text().equals(Token.Symbol.Asterisk) && match(Kind.Operator)) {
+                tuple.add(typeExpr());
+                c = currentToken();
+            }
+
+            return new TypeExpression.Tuple(tuple);
+
         }
-        return new TypeExpression.Tuple(tuple);
+
+        return expression;
+    }
+
+    private TypeExpression typesType() {
+
+        TypeExpression expression = primaryType();
+
+        if (check(Kind.CapitalizedIdentifier)) {
+            return new TypeExpression.Types(expression, typeConstr());
+        }
+
+        return expression;
+    }
+
+    private TypeExpression primaryType() {
+
+        if (check(Kind.Quote)) return polyTypeExpr();
+        if (check(Kind.OpenParenthesis)) return groupTypeExpr();
+        if (check(Kind.CapitalizedIdentifier)) return typeConstr();
+
+        throw new RuntimeException("Unknown type expression.");
     }
 
     /**
@@ -191,12 +216,15 @@ public final class Parser {
      * @return statement
      */
     private Statement.Instr instructionExpr() {
+
         List<Expression> expressions = new LinkedList<>();
         expressions.add(expression());
+
         do {
             expressions.add(expression());
             consume(Kind.Semicolon, "We need a ';' symbole to close the instruction.");
         } while (check(Kind.Semicolon));
+
         return new Statement.Instr(expressions);
     }
 
@@ -244,14 +272,17 @@ public final class Parser {
      * @return module statement
      */
     private ModuleContent moduleContent() {
+
         if (check(Kind.LetKw)) {
             Statement.Let letStmt = letStmt();
             return new ModuleContent(letStmt, moduleContent());
         }
+
         if (check(Kind.TypeKw)) {
             Statement typeStmt = typeStmt();
             return new ModuleContent(typeStmt, moduleContent());
         }
+
         return null;
     }
 
@@ -293,6 +324,7 @@ public final class Parser {
     }
 
     private Expression comparison() {
+
         Expression expr = term();
 
         var value = currentToken().text();
@@ -388,6 +420,7 @@ public final class Parser {
     }
 
     private Expression primary() {
+
         if (check(Kind.String)) return stringExpr();
         if (check(Kind.Text)) return textExpr();
         if (check(Kind.LetKw)) return letIn();
@@ -400,6 +433,7 @@ public final class Parser {
         if (check(Kind.CapitalizedIdentifier)) return moduleCallExpr();
         if (check(Kind.Int)) return integerExpr();
         if (check(Kind.Float)) return floatExpr();
+
         return null;
     }
 
@@ -427,11 +461,14 @@ public final class Parser {
      * @return expr
      */
     private Expression moduleCallExpr() {
+
         Identifier.Capitalized identifier = capitalized("We need the a capitalized id.");
+
         if (match(Kind.Dot)) {
             Nameable.ValueName labelName = valueName("We need a value id of a declaration from the module.");
             return new Expression.ModuleCallExpr(new Nameable.ModuleName(identifier), labelName);
         }
+
         return new Expression.IdentExpr(new Nameable.ValueName.NType(identifier));
     }
 
@@ -441,6 +478,7 @@ public final class Parser {
      * @return expr
      */
     private Expression valueNameExpr() {
+
         Nameable.ValueName labelName = valueName("We need a label id.");
         return new Expression.IdentExpr(labelName);
     }
@@ -451,10 +489,13 @@ public final class Parser {
      * @return expr
      */
     private Expression lambdaExpr() {
+
         consume(Kind.FunKw, "We need the 'fun' keyword to declare a lambda");
         Parameters parameters = parameters();
+
         consume(Kind.Arrow, "We need the '->' symbol to specifies an expr for the lambda.");
         Expression expression = expression();
+
         return new Expression.Lambda(parameters, expression);
     }
 
@@ -464,17 +505,21 @@ public final class Parser {
      * @return expr
      */
     private Expression patternMatching() {
+
         consume(Kind.MatchKw, "We need the keyword 'match' to declare a pattern matching.");
         Expression expression = expression();
         consume(Kind.WithKw, "We need the keyword 'with' after an expr.");
+
         List<Pattern> patterns = new ArrayList<>();
         List<Expression> expressions = new ArrayList<>();
+
         while (check(Kind.Pipe)) {
             consume(Kind.Pipe, "");
             patterns.add(pattern());
             consume(Kind.Arrow, "We need the '->' to expr an expr.");
             expressions.add(expression());
         }
+
         return new Expression.PatternMatching(expression, patterns, expressions);
     }
 
@@ -502,14 +547,18 @@ public final class Parser {
      * @return expr
      */
     private Expression listExpr() {
+
         consume(Kind.OpenSquareBracket, "We need a '[' symbol.");
+
         if (check((Kind.CloseSquareBracket))){
             consume(Kind.CloseSquareBracket,"");
             return new Expression.ListExpr(new RaviList.EmptyList());
         }
+
         Expression expression = expression();
         RaviRestList rest = restList();
         consume(Kind.CloseSquareBracket, "We need a ']' symbol.");
+
         return new Expression.ListExpr(new RaviList.List(expression,rest));
     }
 
@@ -955,7 +1004,7 @@ public final class Parser {
     private Token nextToken() {
 
         if (position >= tokens.size()) {
-            return null;
+            return tokens.get(tokens.size() - 1);
         }
 
         Token token = tokens.get(position);

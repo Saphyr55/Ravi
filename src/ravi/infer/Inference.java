@@ -306,6 +306,18 @@ public final class Inference {
             return s;
         }
 
+        if  (t1 instanceof Type.TType type1) {
+            return varBind(type1.typeName(), t2);
+        }
+
+        if (t2 instanceof Type.TType type2) {
+            return varBind(type2.typeName(), t1);
+        }
+
+        if (t1 instanceof Type.TPolyType p1 && t2 instanceof Type.TPolyType p2) {
+            return mgu(p1.type(), p2.type());
+        }
+
         if (t1 instanceof Type.TString && t2 instanceof Type.TString) {
             return Substitution.empty();
         }
@@ -402,27 +414,29 @@ public final class Inference {
 
             var c = context;
             var typeName = Nameable.stringOf(adt.name());
-            List<Type> constructors = new ArrayList<>();
-            c = c.union(Map.of(typeName, makeScheme(new Type.ADT(typeName, List.of()))));
+            var polys = adt
+                    .polyTypes()
+                    .stream()
+                    .map(poly -> "'" + poly.identifier().id())
+                    .toList();
+
+            var type = new Type.TType(polys, typeName);
+            c = c.unionTypes(Map.of(typeName, new Scheme(polys, type)));
 
             for (var entry : adt.typesConstructors().entrySet()) {
-                var name = Nameable.stringOf(entry.getKey());
-                if (entry.getValue() != null) {
-                    var type = new Type.TVar(typeName);
-                    var constructorType = determine(entry.getValue());
-                    constructorType = new Type.TFunc(List.of(constructorType), type);
-                    constructors.add(constructorType);
-                    c = c.union(Map.of(name, generalize(c, constructorType)));
-                } else {
-                    var constructorType = new Type.TVar(typeName);
-                        constructors.add(constructorType);
-                    c = c.union(Map.of(name, generalize(c, constructorType)));
-                }
-            }
 
-            Context finalC = c;
-            var l = constructors.stream().map(type -> generalize(finalC, type)).toList();
-            c = c.union(Map.of(typeName, makeScheme(new Type.ADT(typeName, l))));
+                var name = Nameable.stringOf(entry.getKey());
+                var fct = c;
+
+                var consType = Optional
+                        .ofNullable(entry.getValue())
+                        .map(e -> (Type) new Type.TFunc(List.of(determine(fct, e)), type))
+                        .orElse(type);
+
+                var scheme = new Scheme(polys, consType);
+
+                c = c.union(Map.of(name, scheme));
+            }
 
             return c;
         }
@@ -471,25 +485,49 @@ public final class Inference {
         return new Statement.Let(let.name(), new Parameters(List.of()), lambda);
     }
 
-    public Type determine(TypeExpression expression) {
+    public Type determine(Context context, TypeExpression expression) {
         Objects.requireNonNull(expression);
 
         if (expression instanceof TypeExpression.Name name) {
-            return new Type.TVar(Nameable.stringOf(name.name()));
+            String n = Nameable.stringOf(name.name());
+            if (context.types().containsKey(n)) {
+                Scheme scheme = context.types().get(n);
+                return instantiate(scheme);
+            }
+            throw new InferException("unbound variable: '%s'.".formatted(n));
         }
+
         if (expression instanceof TypeExpression.Poly poly) {
             return new Type.TVar("'" + poly.identifier().id());
         }
+
         if (expression instanceof TypeExpression.Arrow arrow) {
-            var types = arrow.types().stream().map(this::determine).toList();
+            var types = arrow
+                    .types()
+                    .stream()
+                    .map(e -> determine(context, e))
+                    .toList();
             return new Type.TFunc(types.subList(1, types.size()), types.get(0));
         }
+
         if (expression instanceof TypeExpression.Tuple tuple) {
-            return new Type.TTuple(tuple.tuple().stream().map(this::determine).toList());
+            return new Type.TTuple(tuple
+                    .tuple()
+                    .stream()
+                    .map(e -> determine(context, e))
+                    .toList());
         }
+
         if (expression instanceof TypeExpression.GetTypeModule get) {
             return new Type.TVar(Nameable.stringOf(get.typeName()));
         }
+
+        if (expression instanceof TypeExpression.Types types) {
+            var poly = determine(context, types.type());
+            var type = determine(context, types.name());
+            return new Type.TPolyType(List.of(poly), type);
+        }
+
         throw new RuntimeException("Missing implementation.");
     }
 
