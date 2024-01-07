@@ -200,6 +200,10 @@ public final class Inference {
             return infer(context, unary.right());
         }
 
+        if (expression instanceof Expression.IfExpr expr) {
+            return new Couple(Substitution.empty(),fresh("a"));
+        }
+
         throw new RuntimeException("Missing Implementation");
     }
 

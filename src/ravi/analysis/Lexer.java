@@ -102,14 +102,16 @@ public final class Lexer {
         }
 
         if (c.equals(Symbol.Equal)) {
-            if (!Token.isOperator(advanceStr())) {
+            if (!Token.isOperator(peekStr())) {
+
                 addToken(Kind.Equal);
                 return;
             }
         }
 
         if (c.equals(Symbol.Pipe)) {
-            if (!Token.isOperator(advanceStr())) {
+            if (!Token.isOperator(peekStr())) {
+
                 addToken(Kind.Pipe);
                 return;
             }

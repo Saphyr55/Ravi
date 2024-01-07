@@ -152,6 +152,12 @@ public final class Interpreter {
             return Value.list(values);
         }
 
+        if (expression instanceof Expression.IfExpr expr) {
+            Value.VBool bool = (Value.VBool) evaluate(expr.condition());
+            if (bool.bool()) return evaluate(expr.exprIf());
+            return evaluate(expr.exprElse());
+        }
+
         if (expression instanceof Expression.ConstantExpr expr) {
             return evaluate(expr.constant());
         }
@@ -203,7 +209,7 @@ public final class Interpreter {
         if (binary.operator().symbolInfixOp().equals(Token.Symbol.Slash)) {
             var left = (Value.VInt) evaluate(binary.left());
             var right = (Value.VInt) evaluate(binary.right());
-            return Value.integer(left.integer() * right.integer());
+            return Value.integer(left.integer() / right.integer());
         }
 
         if (binary.operator().symbolInfixOp().equals(Token.Symbol.Asterisk)) {
@@ -222,6 +228,19 @@ public final class Interpreter {
             var left = (Value.VInt) evaluate(binary.left());
             var right = (Value.VInt) evaluate(binary.right());
             return Value.integer(left.integer() + right.integer());
+        }
+
+        if (binary.operator().symbolInfixOp().equals(Token.Symbol.Equal)) {
+            var left = evaluate(binary.left());
+            var right = evaluate(binary.right());
+            Boolean cond = left.equals(right);
+            return new Value.VBool(cond);
+        }
+
+        if (binary.operator().symbolInfixOp().equals(Token.Symbol.NotEqual)) {
+            var left = evaluate(binary.left());
+            var right = evaluate(binary.right());
+            return new Value.VBool(!left.equals(right));
         }
 
         throw new InterpretException("");

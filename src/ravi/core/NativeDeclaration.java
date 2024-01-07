@@ -40,6 +40,12 @@ public final class NativeDeclaration {
                 .toList());
     }
 
+    @RaviNative(name = "True")
+    static Value trou(Interpreter inter) { return new Value.VBool(true); }
+
+    @RaviNative(name = "False")
+    static Value folse(Interpreter inter) { return new Value.VBool(false); }
+
     /**
      *
      */

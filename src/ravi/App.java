@@ -55,7 +55,7 @@ public class App implements ActionListener {
 
         String source =
                 Files.readString(
-                    Path.of("ravi/TypeTest.ravi"),
+                    Path.of("ravi/Core.ravi"),
                     StandardCharsets.UTF_8
                 );
 
@@ -84,6 +84,8 @@ public class App implements ActionListener {
 
     private static Context context() {
         return new Context(Map.of(
+                "True", new Scheme(List.of(), new Type.TBool()),
+                "False", new Scheme(List.of(), new Type.TBool()),
                 "print", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a")), new Type.TUnit())),
                 "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
                 "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
@@ -93,7 +95,8 @@ public class App implements ActionListener {
                 "Float", new Scheme(List.of(), new Type.TFloat()),
                 "Unit", new Scheme(List.of(), new Type.TUnit()),
                 "Int", new Scheme(List.of(), new Type.TInt()),
-                "String", new Scheme(List.of(), new Type.TString())
+                "String", new Scheme(List.of(), new Type.TString()),
+                "Bool", new Scheme(List.of(), new Type.TBool())
         ), new Context());
     }
 

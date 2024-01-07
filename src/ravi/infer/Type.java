@@ -15,6 +15,8 @@ public sealed interface Type extends Typing<Type> {
 
     record TFunc(List<Type> params, Type expr) implements Type { }
 
+    record TBool() implements Type { }
+
     record TInt() implements Type { }
 
     record TFloat() implements Type { }
@@ -47,6 +49,10 @@ public sealed interface Type extends Typing<Type> {
         }
 
         if (this instanceof TUnit) {
+            return Set.of();
+        }
+
+        if (this instanceof TBool) {
             return Set.of();
         }
 
@@ -140,6 +146,10 @@ public sealed interface Type extends Typing<Type> {
 
         if (this instanceof TVar var) {
             return var.name;
+        }
+
+        if (this instanceof TBool) {
+            return "Bool";
         }
 
         if (this instanceof TFunc t) {

@@ -1,7 +1,14 @@
-module Core in
-
 let ( |> ) x f = f x
 end
 
 let ( <| ) f x = f x
 end
+
+let id x =
+    if x = 5 then
+        True
+    else
+        False
+end
+
+print (id False);

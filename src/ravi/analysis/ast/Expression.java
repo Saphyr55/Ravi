@@ -29,9 +29,17 @@ public sealed interface Expression {
                            List<Expression> expressions)
             implements Expression { }
 
+
+    record IfExpr(Expression condition,
+                  Expression exprIf,
+                  Expression exprElse)
+            implements Expression { }
+
     record Lambda(Parameters parameters, Expression expr) implements Expression { }
 
-    record ModuleCallExpr(Nameable.ModuleName moduleName, Nameable.ValueName valueName) implements Expression { }
+    record ModuleCallExpr(Nameable.ModuleName moduleName,
+                          Nameable.ValueName valueName)
+            implements Expression { }
 
     record IdentExpr(Nameable.ValueName valueName) implements Expression { }
 

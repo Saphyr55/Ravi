@@ -15,6 +15,8 @@ public sealed interface Value {
 
     record VFloat(Float cFloat) implements Value { }
 
+    record VBool(Boolean bool) implements Value { }
+
     record VUnit() implements Value { }
 
     record VObject(Object content) implements Value { }
@@ -78,6 +80,9 @@ public sealed interface Value {
         }
         if (this instanceof VFloat vFloat) {
             return vFloat.cFloat.toString();
+        }
+        if (this instanceof VBool bool) {
+            return bool.bool.toString();
         }
         if (this instanceof VAlgebraicDataType adt) {
             if (adt.value instanceof VUnit) return adt.name;

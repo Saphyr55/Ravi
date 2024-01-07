@@ -314,7 +314,7 @@ public final class Parser {
         var check = value.equals(Token.Symbol.NotEqual) ||
                 value.equals(Token.Symbol.Equal);
 
-        while (check(Kind.Operator) && check) {
+        while ( ( check(Kind.Operator) || check(Kind.Equal) ) && check) {
             Operator operator = operator();
             Expression right = comparison();
             expr = new Expression.Binary(expr, operator, right);
@@ -433,8 +433,23 @@ public final class Parser {
         if (check(Kind.CapitalizedIdentifier)) return moduleCallExpr();
         if (check(Kind.Int)) return integerExpr();
         if (check(Kind.Float)) return floatExpr();
+        if (check(Kind.IfKw)) return ifExpr();
 
         return null;
+    }
+
+    private Expression ifExpr() {
+
+        consume(Kind.IfKw, "We need the keyword 'if' to declare a condition.");
+        Expression condition = expression();
+
+        consume(Kind.ThenKw, "We need the keyword 'then' after an expr.");
+        Expression exprIf = expression();
+
+        consume(Kind.ElseKw, "We need the keyword 'else' after an expr.");
+        Expression exprElse = expression();
+
+        return new Expression.IfExpr(condition, exprIf, exprElse);
     }
 
     /**
@@ -950,6 +965,10 @@ public final class Parser {
         if (check(Kind.Operator)) {
             Token token = consume(Kind.Operator, "");
             return new Operator((String) token.value());
+        }
+        if (check(Kind.Equal)) {
+            Token token = consume(Kind.Equal, "");
+            return new Operator(Token.Symbol.Equal);
         }
 
         return null;

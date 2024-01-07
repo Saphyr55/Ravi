@@ -28,6 +28,9 @@ Expr -> Expr Argument
       | ( Expr )
       | begin Expr end
       | match Expr with Pattern
+      | if Expr then Expr else Expr
+
+
 
 Pattern -> _
         | Pattern :: Pattern
