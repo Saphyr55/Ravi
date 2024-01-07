@@ -3,8 +3,8 @@ Program' -> Program
         | epsilon
 
 Statement -> Let
-	         | Instr
-	         | Module
+	   | Instr
+	   | Module
 
 Instr -> Expr ;
 

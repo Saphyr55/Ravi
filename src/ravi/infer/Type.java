@@ -25,7 +25,7 @@ public sealed interface Type extends Typing<Type> {
 
     record TPolyType(List<Type> poly, Type type) implements Type { }
 
-    record TType(List<String> poly, String typeName) implements Type { }
+    record TType(List<TVar> vars, String typeName) implements Type { }
 
     @Override
     default Set<String> ftv() {
@@ -119,8 +119,7 @@ public sealed interface Type extends Typing<Type> {
     default String toStr() {
 
         if (this instanceof TType t) {
-            var poly = t.poly.isEmpty() ? "" : String.join(" ", t.poly) + " ";
-            return  poly + t.typeName();
+            return t.typeName();
         }
 
         if (this instanceof TString) {

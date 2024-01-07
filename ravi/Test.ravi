@@ -71,12 +71,12 @@ end
 let ( |> ) x f = f x
 end
 
-let ( $ ) f x = f x
+let ( <| ) f x = f x
 end
 
 let concatListAndPrint _ =
   (* My comment *)
-  print $ l @ [ "2"; "Not a unit." ]
+  print <| l @ [ "2"; "Not a unit." ]
 end
 
 let f msg phi =
@@ -90,7 +90,7 @@ let f msg phi =
 
   let () = print "x" in
 
-  phi $ format msg [t; s]
+  phi <| format msg [t; s]
 
 end
 
@@ -103,14 +103,14 @@ print ( List.isEmpty ["8"; "8"; List.empty] );
 let mapTestList f = List.map f l
 end
 
-print $ mapTestList ( fun e -> format "Element: %s" [e] );
+print <| mapTestList ( fun e -> format "Element: %s" [e] );
 print 9.48462;
 let x = 2
 end
 
-print $ 1 + x * x + 1;
+print <| 1 + x * x + 1;
 
 List.count l 0 |> print;
 
-print $ 2 ** 8;
+print <| 2 ** 8;
 

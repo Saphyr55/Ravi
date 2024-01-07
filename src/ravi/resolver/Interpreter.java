@@ -40,7 +40,7 @@ public final class Interpreter {
         }
 
         else if (statement instanceof Statement.ADT adt) {
-            defineADTType(environment, adt);
+            defineADT(environment, adt);
         }
 
         else if (statement instanceof Statement.Instr instr) {
@@ -55,12 +55,12 @@ public final class Interpreter {
             defineFunction(environment, Nameable.stringOf(let.name()), let.parameters(), let.expr());
         }
         else if (content.statement() instanceof Statement.ADT adt) {
-            defineADTType(environment, adt);
+            defineADT(environment, adt);
         }
         interpretModuleContent(environment, content.restContent());
     }
 
-    void defineADTType(Environment environment, Statement.ADT adt) {
+    void defineADT(Environment environment, Statement.ADT adt) {
         adt.typesConstructors().forEach((caseName, typeExpression) -> {
             String name = Nameable.stringOf(caseName);
             if (typeExpression == null) {

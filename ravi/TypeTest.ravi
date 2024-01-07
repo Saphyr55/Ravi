@@ -1,26 +1,29 @@
-let ( $ ) f x = f x
+let ( <| ) f x = f x
 end
 
 type 'a List =
   | Empty
-  | Cons: 'a * ('a List)
+  | Cons of 'a * ('a List)
 
 module Game =
 
-  type Player = Hero: String * Int
+  type Player = Hero of String * Int
 
   let hit player damage =
       match player with
-      | Hero (name, hp) ->
-        Hero (name, hp - damage)
+      | Hero (name, hp) -> Hero (name, hp - damage)
   end
 
 end
 
-let player = Game.Hero("Andy", 10)
+let player name = Game.Hero(name, 10)
 end
 
-print $ Game.hit player 5;
+let append l el =
+  match l with
+  | Empty -> Cons(el, l)
+  | Cons (_, t) -> append t el
+end
 
 let count l =
   let aux l n =
@@ -31,15 +34,9 @@ let count l =
   aux l 0
 end
 
-let append l el =
-  match l with
-  | Empty -> Cons(el, l)
-  | Cons (_, t) -> append t el
+let l _ = Cons("", Cons("", Cons("", Cons("", Cons("", Cons("", Cons("", Empty)))))))
 end
 
-let l = Cons("", Cons("", Cons("", Cons("", Cons("", Cons("", Cons("", Empty)))))))
-end
+print <| Game.hit (player "Andy") 5;
 
-let () =
-  print $ count l
-end
+print <| count (l ());

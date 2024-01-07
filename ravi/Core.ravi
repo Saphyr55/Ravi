@@ -1,6 +1,7 @@
+module Core in
 
 let ( |> ) x f = f x
 end
 
-let ( $ ) f x = f x
+let ( <| ) f x = f x
 end

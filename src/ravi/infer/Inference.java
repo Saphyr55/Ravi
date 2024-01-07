@@ -17,13 +17,16 @@ public final class Inference {
     public Couple infer(Context context, Expression expression) {
 
         if (expression instanceof Expression.IdentExpr expr) {
-            String varName = Nameable.stringOf(expr.valueName());
-            if (context.env().containsKey(varName)) {
-                Scheme scheme = context.env().get(varName);
-                var type = instantiate(scheme);
+
+            String name = Nameable.stringOf(expr.valueName());
+
+            if (context.env().containsKey(name)) {
+                Scheme scheme = context.env().get(name);
+                Type type = instantiate(scheme);
                 return new Couple(Substitution.empty(), type);
             }
-            throw new InferException("unbound variable: %s".formatted(varName));
+
+            throw new InferException("unbound variable: %s".formatted(name));
         }
 
         if (expression instanceof Expression.Application application) {
@@ -231,7 +234,9 @@ public final class Inference {
                 .stream()
                 .map(s -> fresh("a"))
                 .collect(Collectors.toList());
+
         var s = new Substitution(Core.zipToMap(scheme.forall(), nVars));
+
         return scheme.type().apply(s);
     }
 
@@ -322,7 +327,7 @@ public final class Inference {
             return Substitution.empty();
         }
 
-        throw new RuntimeException("types do not unify: " + t1.toStr() + " with a " + t2.toStr());
+        throw new RuntimeException("types do not unify: " + t1.toStr() + " with " + t2.toStr());
     }
 
     public Context infer(Context context, Pattern pattern) {
@@ -337,10 +342,7 @@ public final class Inference {
 
         if (pattern instanceof Pattern.PTuple tuple) {
             return tuple.patterns().stream()
-                    .map(p -> {
-                        Objects.requireNonNull(p);
-                        return infer(context, p);
-                    })
+                    .map(p -> infer(context, p))
                     .reduce(Context::union)
                     .orElse(context);
         }
@@ -365,7 +367,7 @@ public final class Inference {
             return st0.union(st1);
         }
 
-        if (pattern instanceof Pattern.PList list) {
+        if (pattern instanceof Pattern.PList) {
             return context;
         }
 
@@ -420,7 +422,8 @@ public final class Inference {
                     .map(poly -> "'" + poly.identifier().id())
                     .toList();
 
-            var type = new Type.TType(polys, typeName);
+            var vars = polys.stream().map(Type.TVar::new).toList();
+            var type = new Type.TType(vars, typeName);
             c = c.unionTypes(Map.of(typeName, new Scheme(polys, type)));
 
             for (var entry : adt.typesConstructors().entrySet()) {
@@ -486,7 +489,6 @@ public final class Inference {
     }
 
     public Type determine(Context context, TypeExpression expression) {
-        Objects.requireNonNull(expression);
 
         if (expression instanceof TypeExpression.Name name) {
             String n = Nameable.stringOf(name.name());
@@ -507,7 +509,10 @@ public final class Inference {
                     .stream()
                     .map(e -> determine(context, e))
                     .toList();
-            return new Type.TFunc(types.subList(1, types.size()), types.get(0));
+            return new Type.TFunc(types.subList(1, types.size()), types
+                    .stream()
+                    .findFirst()
+                    .orElseThrow());
         }
 
         if (expression instanceof TypeExpression.Tuple tuple) {
