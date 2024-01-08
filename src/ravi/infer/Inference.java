@@ -41,6 +41,7 @@ public final class Inference {
             var sts2 = e2.stream()
                     .map(e -> infer(context.apply(s1), e))
                     .toList();
+
             var ts2 = sts2.stream()
                     .map(Couple::t)
                     .toList();
@@ -59,8 +60,7 @@ public final class Inference {
 
             return new Couple(
                     s3.compose(s2).compose(s1),
-                    tau.apply(s3)
-                );
+                    tau.apply(s3));
         }
 
         if (expression instanceof Expression.Lambda lambda) {
@@ -71,13 +71,13 @@ public final class Inference {
                     .stream()
                     .map(n -> Map.entry(
                             Nameable.stringOf(n),
-                            fresh("a"))
-                    ).toList();
+                            fresh("a")))
+                    .toList();
 
             var schemes = params
                     .stream()
-                    .map(e -> Map.entry(e.getKey(), makeScheme(e.getValue()))
-                    ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    .map(e -> Map.entry(e.getKey(), makeScheme(e.getValue())))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             var contextP = context.union(schemes);
 
@@ -131,9 +131,20 @@ public final class Inference {
         }
 
         if (expression instanceof Expression.Tuple tuple) {
-            var cs = tuple.expressions().stream().map(e -> infer(context, e)).toList();
-            var s = cs.stream().map(Couple::s).reduce(Substitution::compose).orElse(Substitution.empty());
-            return new Couple(s, new Type.TTuple(cs.stream().map(Couple::t).toList()));
+
+            var cs = tuple.expressions().stream()
+                    .map(e -> infer(context, e))
+                    .toList();
+
+            var s = cs.stream()
+                    .map(Couple::s)
+                    .reduce(Substitution::compose)
+                    .orElse(Substitution.empty());
+
+            return new Couple(s,
+                    new Type.TTuple(cs.stream()
+                            .map(Couple::t)
+                            .toList()));
         }
 
         if (expression instanceof Expression.Instr) {
@@ -141,14 +152,18 @@ public final class Inference {
         }
 
         if (expression instanceof Expression.ListExpr listExpr) {
+
             if (listExpr.list() instanceof RaviList.List list) {
+
                 var st = infer(context, list.head());
                 var s1 = st.s;
                 var t1 = st.t;
                 var s2 = inferRaviList(s1, context, t1, list.tail());
                 var t = t1.apply(s2);
+
                 return new Couple(s2, new Type.TList(t));
             }
+
             return infer(new Constant.CEmptyList());
         }
 
@@ -201,7 +216,18 @@ public final class Inference {
         }
 
         if (expression instanceof Expression.IfExpr expr) {
-            return new Couple(Substitution.empty(),fresh("a"));
+
+            var e1 = infer(context, expr.exprIf());
+            var e2 = infer(context, expr.exprElse());
+
+            var e3 = infer(context.apply(e1.s).apply(e2.s), expr.condition());
+
+            var sub = mgu(e1.t, e2.t);
+
+            return new Couple(sub, e1.t);
+
+            //return new Couple(Substitution.empty(), tau);
+
         }
 
         throw new RuntimeException("Missing Implementation");
@@ -217,9 +243,12 @@ public final class Inference {
 
     private Substitution inferRaviList(Substitution s, Context context, Type pred, RaviRestList rest) {
 
-        if (rest == null) return s;
+        if (rest == null)
+            return s;
+
         var st = infer(context, rest.expression());
         var sub = s.compose(mgu(pred, st.t()));
+
         return inferRaviList(sub, context, st.t().apply(s), rest.rest());
     }
 
@@ -249,6 +278,7 @@ public final class Inference {
         var typeFtv = new LinkedList<>(type.ftv());
         var ftv = context.ftv();
         typeFtv.removeAll(ftv);
+
         return new Scheme(typeFtv, type);
     }
 
@@ -263,14 +293,30 @@ public final class Inference {
     public Substitution mgu(Type t1, Type t2) {
 
         if (t1 instanceof Type.TFunc f1 && t2 instanceof Type.TFunc f2) {
+
             var s1 = mgu(f1.expr(), f2.expr());
             var s2 = s1;
+
             for (int i = 0; i < f1.params().size(); i++) {
                 var p1 = f1.params().get(i);
                 var p2 = f2.params().get(i);
                 s2 = mgu(p1, p2).compose(s2);
             }
+
             return s2.compose(s1);
+        }
+
+        if (t1 instanceof Type.TTuple tuple1 && t2 instanceof Type.TTuple tuple2) {
+
+            var s = Substitution.empty();
+
+            for (int i = 0; i < tuple1.types().size(); i++) {
+                var p1 = tuple1.types().get(i);
+                var p2 = tuple2.types().get(i);
+                s = mgu(p1, p2).compose(s);
+            }
+
+            return s;
         }
 
         if (t1 instanceof Type.TVar var) {
@@ -279,18 +325,6 @@ public final class Inference {
 
         if (t2 instanceof Type.TVar var) {
             return varBind(var.name(), t1);
-        }
-
-        if (t1 instanceof Type.TInt && t2 instanceof Type.TInt) {
-            return Substitution.empty();
-        }
-
-        if (t1 instanceof Type.TFloat && t2 instanceof Type.TFloat) {
-            return Substitution.empty();
-        }
-
-        if (t1 instanceof Type.TUnit && t2 instanceof Type.TUnit) {
-            return Substitution.empty();
         }
 
         if (t1 instanceof Type.TList l1 && t2 instanceof Type.TList l2) {
@@ -305,16 +339,6 @@ public final class Inference {
             return mgu(t1, l2.type());
         }
 
-        if (t1 instanceof Type.TTuple tuple1 && t2 instanceof Type.TTuple tuple2) {
-            var s = Substitution.empty();
-            for (int i = 0; i < tuple1.types().size(); i++) {
-                var p1 = tuple1.types().get(i);
-                var p2 = tuple2.types().get(i);
-                s = mgu(p1, p2).compose(s);
-            }
-            return s;
-        }
-
         if  (t1 instanceof Type.TType type1) {
             return varBind(type1.typeName(), t2);
         }
@@ -327,7 +351,23 @@ public final class Inference {
             return mgu(p1.type(), p2.type());
         }
 
+        if (t1 instanceof Type.TInt && t2 instanceof Type.TInt) {
+            return Substitution.empty();
+        }
+
+        if (t1 instanceof Type.TFloat && t2 instanceof Type.TFloat) {
+            return Substitution.empty();
+        }
+
+        if (t1 instanceof Type.TUnit && t2 instanceof Type.TUnit) {
+            return Substitution.empty();
+        }
+
         if (t1 instanceof Type.TString && t2 instanceof Type.TString) {
+            return Substitution.empty();
+        }
+
+        if (t1 instanceof Type.TBool && t2 instanceof Type.TBool) {
             return Substitution.empty();
         }
 
@@ -408,9 +448,13 @@ public final class Inference {
     }
 
     public Context infer(Context context, Program program) {
-        if (program == null) return context;
+
+        if (program == null)
+            return context;
+
         var c = infer(context, program.statement());
         c = infer(c, program.program());
+
         return c;
     }
 
@@ -475,31 +519,47 @@ public final class Inference {
     }
 
     public Context infer(Context context, ModuleContent content) {
-        if (content == null) return new Context().union(context);
+
+        if (content == null)
+            return new Context().union(context);
+
         var ctx = infer(context, content.statement());
+
         return infer(ctx, content.restContent());
     }
 
     public Expression.LetIn compress(Expression.LetIn in) {
-        if (in.parameters().declarations().isEmpty()) return in;
+
+        if (in.parameters().declarations().isEmpty())
+            return in;
+
         var lambda = new Expression.Lambda(in.parameters(), in.expr());
+
         return new Expression.LetIn(in.name(), new Parameters(List.of()), lambda, in.result());
     }
 
     public Statement.Let compress(Statement.Let let) {
-        if (let.parameters().declarations().isEmpty()) return let;
+
+        if (let.parameters().declarations().isEmpty())
+            return let;
+
         var lambda = new Expression.Lambda(let.parameters(), let.expr());
+
         return new Statement.Let(let.name(), new Parameters(List.of()), lambda);
     }
 
     public Type determine(Context context, TypeExpression expression) {
 
         if (expression instanceof TypeExpression.Name name) {
+
             String n = Nameable.stringOf(name.name());
+
             if (context.types().containsKey(n)) {
+
                 Scheme scheme = context.types().get(n);
                 return instantiate(scheme);
             }
+
             throw new InferException("unbound variable: '%s'.".formatted(n));
         }
 
@@ -508,11 +568,13 @@ public final class Inference {
         }
 
         if (expression instanceof TypeExpression.Arrow arrow) {
+
             var types = arrow
                     .types()
                     .stream()
                     .map(e -> determine(context, e))
                     .toList();
+
             return new Type.TFunc(types.subList(1, types.size()), types
                     .stream()
                     .findFirst()
@@ -532,8 +594,10 @@ public final class Inference {
         }
 
         if (expression instanceof TypeExpression.Types types) {
+
             var poly = determine(context, types.type());
             var type = determine(context, types.name());
+
             return new Type.TPolyType(List.of(poly), type);
         }
 

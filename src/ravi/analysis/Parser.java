@@ -294,7 +294,7 @@ public final class Parser {
             Token token = consume(Kind.Operator, "");
             Expression right = expression();
             return new Expression.ApplicationOperator(
-                    right, (String) token.value(), expression);
+                    expression, (String) token.value(), right);
         }
 
         if (expression != null && check(Kind.DoubleColon)) {
@@ -311,10 +311,11 @@ public final class Parser {
         Expression expr = comparison();
 
         var value = currentToken().text();
-        var check = value.equals(Token.Symbol.NotEqual) ||
+        var check =
+                value.equals(Token.Symbol.NotEqual) ||
                 value.equals(Token.Symbol.Equal);
 
-        while ( ( check(Kind.Operator) || check(Kind.Equal) ) && check) {
+        while ((check(Kind.Operator) || check(Kind.Equal)) && check) {
             Operator operator = operator();
             Expression right = comparison();
             expr = new Expression.Binary(expr, operator, right);
@@ -328,9 +329,10 @@ public final class Parser {
         Expression expr = term();
 
         var value = currentToken().text();
-        var check = value.equals(Token.Symbol.Greater) ||
-                value.equals(Token.Symbol.Lower)   ||
-                value.equals(Token.Symbol.LowerEqual) ||
+        var check =
+                value.equals(Token.Symbol.Greater)      ||
+                value.equals(Token.Symbol.Lower)        ||
+                value.equals(Token.Symbol.LowerEqual)   ||
                 value.equals(Token.Symbol.GreaterEqual);
 
         while (check(Kind.Operator) && check) {
@@ -949,6 +951,7 @@ public final class Parser {
     private Identifier identifier() {
 
         String message = "We need an identifier.";
+
         if (check(Kind.LowercaseIdentifier)) return lowercase(message);
         if (check(Kind.CapitalizedIdentifier)) return capitalized(message);
 

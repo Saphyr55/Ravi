@@ -87,13 +87,17 @@ public final class Interpreter {
     Value evaluate(Expression expression) {
 
         if (expression instanceof Expression.ApplicationOperator appOp) {
+
             Value value = environment.search(appOp.op());
+
             if (value instanceof Value.VApplication application) {
                 return application.application().apply(this, List.of(
-                        evaluate(appOp.right()),
-                        evaluate(appOp.left()))
+                        evaluate(appOp.left()),
+                        evaluate(appOp.right())
+                        )
                 );
             }
+
             throw new InterpretException("( %s ) is not an application".formatted(appOp.op()));
         }
 
@@ -190,14 +194,15 @@ public final class Interpreter {
         if (expression instanceof Expression.Application application) {
 
             var value = evaluate(application.expr());
+
             if (value instanceof Value.VApplication vApplication) {
 
                 return applyValueApplication(vApplication, application.args()
                         .stream()
                         .map(this::evaluate)
                         .toList());
-
             }
+
             throw new InterpretException("You try to pass argument to a not function.");
         }
 
@@ -243,7 +248,11 @@ public final class Interpreter {
             return new Value.VBool(!left.equals(right));
         }
 
-        throw new InterpretException("");
+        return evaluate(
+                new Expression.ApplicationOperator(
+                    binary.left(),
+                    binary.operator().symbolInfixOp(),
+                    binary.right()));
     }
 
     private Value applyValueApplication(Value.VApplication application, List<Value> args) {

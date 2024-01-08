@@ -29,6 +29,7 @@ public sealed interface Value {
 
     record VAlgebraicDataType(String name, Value value) implements Value { }
 
+
     static VAlgebraicDataType adt(String name, Value value) { return new VAlgebraicDataType(name, value); }
 
     static VTuple tuple(List<Value> values) { return new VTuple(values); }
@@ -48,6 +49,8 @@ public sealed interface Value {
     static VInt integer(Integer integer) {
         return new VInt(integer);
     }
+
+    static VBool bool(boolean value) { return new VBool(value); }
 
     static VString string(String content) {
         return new VString(content);

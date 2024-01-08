@@ -39,6 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /*
  * Classe principale.
@@ -83,23 +85,42 @@ public class App implements ActionListener {
     }
 
     private static Context context() {
-        return new Context(Map.of(
+
+        var first =
+                Map.of(
                 "True", new Scheme(List.of(), new Type.TBool()),
                 "False", new Scheme(List.of(), new Type.TBool()),
                 "print", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a")), new Type.TUnit())),
-                "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                "=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool())),
-                "!=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool()))
-        ), Map.of(
+                "neg", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt()), new Type.TInt())),
+                "not", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TBool()), new Type.TBool()))
+                );
+
+        var second =
+                Map.of(
+                    "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                    "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                    "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                    "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                    "=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool())),
+                    "!=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool()))
+                );
+
+        var schemas =
+                Map.of(
                 "Float", new Scheme(List.of(), new Type.TFloat()),
                 "Unit", new Scheme(List.of(), new Type.TUnit()),
                 "Int", new Scheme(List.of(), new Type.TInt()),
                 "String", new Scheme(List.of(), new Type.TString()),
                 "Bool", new Scheme(List.of(), new Type.TBool())
-        ), new Context());
+                );
+
+        return new Context(
+                Stream.concat(first.entrySet().stream(), second.entrySet().stream())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue)),
+                schemas,
+                new Context());
     }
 
     static Proposition mapValueToProposition(Value value) {
@@ -113,9 +134,6 @@ public class App implements ActionListener {
     static Environment environment() {
         Environment env = new Environment();
         NativeDeclaration.genNative(env);
-
-        env.define("True",new Value.VBool(true));
-        env.define("False",new Value.VBool(false));
 
         env.define("location", Application.value(1, (inter, args) -> {
             var lieux = new Lieu(args.get(0).toStr(), new ArrayList<>());

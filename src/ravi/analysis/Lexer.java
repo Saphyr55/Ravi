@@ -103,7 +103,6 @@ public final class Lexer {
 
         if (c.equals(Symbol.Equal)) {
             if (!Token.isOperator(peekStr())) {
-
                 addToken(Kind.Equal);
                 return;
             }
@@ -111,7 +110,6 @@ public final class Lexer {
 
         if (c.equals(Symbol.Pipe)) {
             if (!Token.isOperator(peekStr())) {
-
                 addToken(Kind.Pipe);
                 return;
             }
