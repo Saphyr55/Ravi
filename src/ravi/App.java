@@ -52,26 +52,27 @@ public class App implements ActionListener {
 
     static final List<Lieu> LIEUX = new ArrayList<>();
     static final Map<Integer, Lieu> CONTENT = new HashMap<>();
+    static Interpreter interpreter;
 
     public static void main(String[] args) throws IOException {
 
         String source =
                 Files.readString(
-                    Path.of("ravi/Core.ravi"),
+                    Path.of("ravi/Game.ravi"),
                     StandardCharsets.UTF_8
                 );
 
         Lexer lexer = new Lexer();
         Parser parser = new Parser();
-        Interpreter interpreter = new Interpreter(environment());
+        interpreter = new Interpreter(environment());
 
         ScopeResolver scopeResolver = new ScopeResolver(interpreter);
         List<Token> tokens = lexer.scan(source);
         Program program = parser.program(tokens);
 
-        Inference inference = new Inference();
-        Context context = inference.infer(context(), program);
-        System.out.println(context);
+        // Inference inference = new Inference();
+        // Context context = inference.infer(context(), program);
+        // System.out.println(context);
 
         scopeResolver.resolve(program);
         interpreter.interpretProgram(program);
@@ -142,6 +143,12 @@ public class App implements ActionListener {
         }));
 
         env.define("notImplLocation", new Value.VObject(new Lieu("", List.of())));
+
+        env.define("onProposition", Application.value(2, (inter, args) -> {
+            var prop = (Proposition) ((Value.VObject) args.get(0)).content();
+            prop.application = (Value.VApplication) args.get(1);
+            return Value.unit();
+        }));
 
         env.define("proposition", Application.value(2, (inter, args) -> {
             var lieu = (Lieu) ((Value.VObject) args.get(0)).content();
@@ -250,6 +257,11 @@ public class App implements ActionListener {
 
         // Retrouve la propostion
         Proposition proposition = lieuActuel.propositions.get(index);
+
+        if (proposition.application != null)
+            proposition.application
+                    .application()
+                    .apply(interpreter, List.of(Value.unit()));
 
         // Recherche le lieu désigné par la proposition
         Lieu lieu = lieux.get(proposition.numeroLieu);

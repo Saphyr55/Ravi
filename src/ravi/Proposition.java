@@ -10,10 +10,12 @@ import ravi.model.Value;
 public class Proposition {
     String texte;
     int numeroLieu;
+    Value.VApplication application;
 
     public Proposition(String texte, int numeroLieu) {
         this.texte = texte;
         this.numeroLieu = numeroLieu;
+        this.application = null;
     }
 
     @Override

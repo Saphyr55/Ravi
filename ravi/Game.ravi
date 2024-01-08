@@ -55,17 +55,31 @@ let twentySeven = notImplLocation
 end
 
 
-insert first [
-  (proposition thirteen
+let firstFirstProp =
+  proposition thirteen
   """
   Tentez-vous de dégager l'éboulement pour éventuellement ressortir par où avez dû entrer ?
   """
-  );
-  (proposition nine
+end
+
+let secondFirstProp =
+  proposition nine
   """
   Explorez-vous le souterrain dans l'autre direction ?
   """
-  )
+end
+
+let onClickSecondFirstProp _ =
+  print "Hello World! Second"
+end
+
+onProposition firstFirstProp (fun _ -> print "Hello World!");
+
+onProposition secondFirstProp onClickSecondFirstProp;
+
+insert first [
+  firstFirstProp;
+  secondFirstProp
 ];
 
 insert six [
