@@ -90,7 +90,9 @@ public class App implements ActionListener {
                 "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
                 "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
                 "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt()))
+                "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                "=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool())),
+                "!=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool()))
         ), Map.of(
                 "Float", new Scheme(List.of(), new Type.TFloat()),
                 "Unit", new Scheme(List.of(), new Type.TUnit()),
@@ -111,6 +113,9 @@ public class App implements ActionListener {
     static Environment environment() {
         Environment env = new Environment();
         NativeDeclaration.genNative(env);
+
+        env.define("True",new Value.VBool(true));
+        env.define("False",new Value.VBool(false));
 
         env.define("location", Application.value(1, (inter, args) -> {
             var lieux = new Lieu(args.get(0).toStr(), new ArrayList<>());

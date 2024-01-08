@@ -82,7 +82,7 @@ public sealed interface Value {
             return vFloat.cFloat.toString();
         }
         if (this instanceof VBool bool) {
-            return bool.bool.toString();
+            return bool.bool ? "True" : "False";
         }
         if (this instanceof VAlgebraicDataType adt) {
             if (adt.value instanceof VUnit) return adt.name;

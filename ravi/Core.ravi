@@ -11,4 +11,4 @@ let id x =
         False
 end
 
-print (id False);
+print (id True);
