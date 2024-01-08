@@ -58,7 +58,7 @@ public class App implements ActionListener {
 
         String source =
                 Files.readString(
-                    Path.of("ravi/Game.ravi"),
+                    Path.of("ravi/Game2.ravi"),
                     StandardCharsets.UTF_8
                 );
 

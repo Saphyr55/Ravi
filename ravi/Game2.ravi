@@ -1,0 +1,41 @@
+type Joueur = Hero of String * Int
+
+let bob = Hero ("bob",20)
+end
+
+
+let one = location
+"""
+Vous reprenez conscience.\nVous êtes dans un souterrain en partie éboulé.
+L'un des bouts de souterrain se prolonge au-delà de la portée de votre lampe;
+Tout près de vous, des pierres et des gravats bloquent entièrement le passage.
+Il faut maintenant sortir de là !,
+"""
+end
+
+let two = location
+"""
+Vous êtes mort.
+"""
+end
+
+let propTwo = proposition two
+  """
+  Avancer
+  """
+end
+
+onProposition propTwo (fun _ -> match bob with
+                                | Hero (nom,pv) -> print (pv-pv) );
+
+
+insert one [
+  (proposition one
+  """
+  Rester où vous êtes.
+  """
+  );
+  propTwo
+];
+
+insert two [];
