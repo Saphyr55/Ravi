@@ -98,6 +98,7 @@ public class App implements ActionListener {
 
         var second =
                 Map.of(
+                    "mutValue", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TVar("'a"))),
                     "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
                     "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
                     "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
@@ -133,6 +134,7 @@ public class App implements ActionListener {
     }
 
     static Environment environment() {
+
         Environment env = new Environment();
         NativeDeclaration.genNative(env);
 
@@ -147,6 +149,12 @@ public class App implements ActionListener {
         env.define("onProposition", Application.value(2, (inter, args) -> {
             var prop = (Proposition) ((Value.VObject) args.get(0)).content();
             prop.application = (Value.VApplication) args.get(1);
+            return Value.unit();
+        }));
+
+        env.define("onLocation", Application.value(2, (inter, args) -> {
+            var loc = (Lieu) ((Value.VObject) args.get(0)).content();
+            loc.application = (Value.VApplication) args.get(1);
             return Value.unit();
         }));
 
@@ -258,10 +266,10 @@ public class App implements ActionListener {
         // Retrouve la propostion
         Proposition proposition = lieuActuel.propositions.get(index);
 
-        if (proposition.application != null)
-            proposition.application
-                    .application()
-                    .apply(interpreter, List.of(Value.unit()));
+        // Execute the trigger.
+        proposition.application
+                .application()
+                .apply(interpreter, List.of(Value.unit()));
 
         // Recherche le lieu désigné par la proposition
         Lieu lieu = lieux.get(proposition.numeroLieu);
@@ -273,6 +281,11 @@ public class App implements ActionListener {
             // Affichage du nouveau lieu et création des boutons des nouvelles propositions
             lieuActuel = lieu;
             initLieu();
+
+            lieu.application
+                    .application()
+                    .apply(interpreter, List.of(Value.unit()));
+
         } else {
             // Cas particulier : le lieu est déclarée dans une proposition mais pas encore décrit
             // (lors de l'élaboration de l'aventure par exemple)

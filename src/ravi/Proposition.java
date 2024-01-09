@@ -15,7 +15,7 @@ public class Proposition {
     public Proposition(String texte, int numeroLieu) {
         this.texte = texte;
         this.numeroLieu = numeroLieu;
-        this.application = null;
+        this.application = Value.application((inter, args) -> Value.unit());
     }
 
     @Override

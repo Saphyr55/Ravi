@@ -400,4 +400,8 @@ public final class Interpreter {
         env.define(name, new Value.VApplication(new Func(params, result, env)));
     }
 
+    public void mutValue(Value oldValue, Value newValue) {
+        environment.mutValue(oldValue, newValue);
+    }
+
 }

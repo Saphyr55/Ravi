@@ -3,6 +3,8 @@ package ravi.resolver;
 import ravi.model.Value;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public final class Environment {
 
@@ -40,6 +42,19 @@ public final class Environment {
         if (enclosing != null) return enclosing.value(name);
 
         throw new InterpretException("Undefined variable '" + name + "' on get value id.");
+    }
+
+    public void mutValue(Value oldValue, Value newValue) {
+
+        for (var el : declarations.entrySet()) {
+            if (el.getValue().equals(oldValue)) {
+                declarations.put(el.getKey(), newValue);
+            }
+        }
+
+        if (enclosing != null)
+            enclosing.mutValue(oldValue, newValue);
+
     }
 
     public Value search(String name) {

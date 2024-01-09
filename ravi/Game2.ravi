@@ -1,23 +1,35 @@
-type Joueur = Hero of String * Int
+
+type Player = Hero of String * Int
+
+
+let ( |> ) x f = f x
+end
+
+
+let ( <| ) f x = f x
+end
+
 
 let bob = Hero ("bob",20)
 end
 
 
 let one = location
-"""
-Vous reprenez conscience.\nVous êtes dans un souterrain en partie éboulé.
-L'un des bouts de souterrain se prolonge au-delà de la portée de votre lampe;
-Tout près de vous, des pierres et des gravats bloquent entièrement le passage.
-Il faut maintenant sortir de là !,
-"""
+  """
+  Vous reprenez conscience.\nVous êtes dans un souterrain en partie éboulé.
+  L'un des bouts de souterrain se prolonge au-delà de la portée de votre lampe;
+  Tout près de vous, des pierres et des gravats bloquent entièrement le passage.
+  Il faut maintenant sortir de là !,
+  """
 end
 
+
 let two = location
-"""
-Vous êtes mort.
-"""
+  """
+  Vous êtes mort.
+  """
 end
+
 
 let propTwo = proposition two
   """
@@ -25,8 +37,15 @@ let propTwo = proposition two
   """
 end
 
-onProposition propTwo (fun _ -> match bob with
-                                | Hero (nom,pv) -> print (pv-pv) );
+
+onProposition propTwo (fun _ ->
+  match bob with
+  | Hero (nom, pv) ->
+    let _ = Hero (nom, pv - pv)
+            |> mutValue bob
+    in
+    print bob
+  );
 
 
 insert one [
@@ -38,4 +57,7 @@ insert one [
   propTwo
 ];
 
+
 insert two [];
+
+onLocation two (fun _ -> print bob);

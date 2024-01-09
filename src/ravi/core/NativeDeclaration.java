@@ -51,6 +51,12 @@ public final class NativeDeclaration {
     @RaviNative(name = "False")
     static Value folse() { return new Value.VBool(false); }
 
+    @RaviNative
+    static Value mutValue(Interpreter inter, Value oldValue, Value newValue) {
+        inter.mutValue(oldValue, newValue);
+        return newValue;
+    }
+
     /**
      *
      */
