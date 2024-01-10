@@ -62,11 +62,11 @@ public class App implements ActionListener {
                     StandardCharsets.UTF_8
                 );
 
-        Lexer lexer = new Lexer();
-        Parser parser = new Parser();
+        var lexer = new Lexer();
+        var parser = new Parser();
         interpreter = new Interpreter(environment());
 
-        ScopeResolver scopeResolver = new ScopeResolver(interpreter);
+        var scopeResolver = new ScopeResolver(interpreter);
         List<Token> tokens = lexer.scan(source);
         Program program = parser.program(tokens);
 
@@ -74,7 +74,7 @@ public class App implements ActionListener {
         // Context context = inference.infer(context(), program);
         // System.out.println(context);
 
-        scopeResolver.resolve(program);
+        // scopeResolver.resolve(program);
         interpreter.interpretProgram(program);
 
         for (int i = 0; i < LIEUX.size(); i++) {
@@ -87,28 +87,25 @@ public class App implements ActionListener {
 
     private static Context context() {
 
-        var first =
-                Map.of(
+        var first = Map.of(
                 "True", new Scheme(List.of(), new Type.TBool()),
                 "False", new Scheme(List.of(), new Type.TBool()),
                 "print", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a")), new Type.TUnit())),
                 "neg", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt()), new Type.TInt())),
-                "not", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TBool()), new Type.TBool()))
+                "not", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TBool()), new Type.TBool())),
+                "mutValue", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TVar("'a")))
                 );
 
-        var second =
-                Map.of(
-                    "mutValue", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TVar("'a"))),
-                    "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                    "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                    "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                    "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
-                    "=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool())),
-                    "!=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool()))
+        var second = Map.of(
+                "+", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                "-", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                "*", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                "/", new Scheme(List.of(), new Type.TFunc(List.of(new Type.TInt(), new Type.TInt()), new Type.TInt())),
+                "=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool())),
+                "!=", new Scheme(List.of("'a"), new Type.TFunc(List.of(new Type.TVar("'a"), new Type.TVar("'a")), new Type.TBool()))
                 );
 
-        var schemas =
-                Map.of(
+        var schemas = Map.of(
                 "Float", new Scheme(List.of(), new Type.TFloat()),
                 "Unit", new Scheme(List.of(), new Type.TUnit()),
                 "Int", new Scheme(List.of(), new Type.TInt()),

@@ -1,3 +1,4 @@
+
 let first = location
   """
   Vous reprenez conscience.\nVous êtes dans un souterrain en partie éboulé.
@@ -6,6 +7,7 @@ let first = location
   Il faut maintenant sortir de là !,
   """
 end
+
 
 let two = notImplLocation
 end
@@ -17,12 +19,14 @@ let six = location
   """
 end
 
+
 let nine = location
   """
   Quelque vingt mètres plus loin, vous arrivez au pied d'un escalier.
   Que faites-vous ?
   """
 end
+
 
 let eleven = notImplLocation
 end
@@ -36,17 +40,20 @@ let thirteen = location
   """
 end
 
+
 let seventeen = location
   """
   Une nouvelle avalanche de gravats se déverse sur vous.
   """
 end
 
+
 let eighteen = location
   """
   Une quinzaine de mètre plus loin, le couloir est creusé de deux alcôves
   """
 end
+
 
 let twenty = notImplLocation
 end
@@ -62,6 +69,7 @@ let firstFirstProp =
   """
 end
 
+
 let secondFirstProp =
   proposition nine
   """
@@ -69,18 +77,6 @@ let secondFirstProp =
   """
 end
 
-let onClickSecondFirstProp _ =
-  print "Hello World! Second"
-end
-
-onProposition firstFirstProp (fun _ -> print "Hello World!");
-
-onProposition secondFirstProp onClickSecondFirstProp;
-
-insert first [
-  firstFirstProp;
-  secondFirstProp
-];
 
 insert six [
   (proposition thirteen
